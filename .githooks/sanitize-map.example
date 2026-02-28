@@ -1,0 +1,26 @@
+# sanitize map - rename this file to .sanitize-map and fill in real values
+# format: REAL_NAME=PLACEHOLDER
+# the pre-commit hook reads this file and replaces REAL_NAME with PLACEHOLDER
+# in all staged files before committing.
+#
+# to restore real names locally, run: .githooks/sanitize.sh --reverse
+#
+# IMPORTANT: .githooks/.sanitize-map is gitignored. never commit the real mapping file.
+
+# database
+YOUR_REAL_DATABASE=CORTEX_DB
+
+# schema
+YOUR_REAL_SCHEMA=CORTEX_SCHEMA
+
+# warehouse
+YOUR_REAL_WAREHOUSE=CORTEX_WH
+
+# role
+YOUR_REAL_ROLE=CORTEX_ADMIN
+
+# snowflake account identifier (from CURRENT_ACCOUNT())
+YOUR_REAL_ACCOUNT=CORTEX_ACCOUNT
+
+# snowflake organization name (from app URL: app.snowflake.com/{org}/{locator}/)
+YOUR_REAL_ORG=CORTEX_ORG

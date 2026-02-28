@@ -1,0 +1,6 @@
+definition_version: 1
+streamlit:
+  name: renewal_radar
+  query_warehouse: CORTEX_WH
+  main_file: dashboard.py
+  env_file: environment.yml

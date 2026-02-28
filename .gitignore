@@ -1,0 +1,71 @@
+# Python bytecode and caches
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Build / packaging artifacts
+build/
+dist/
+*.egg-info/
+.eggs/
+*.whl
+
+# Virtual environments
+.venv/
+venv/
+env/
+ENV/
+
+# Tool caches and test artifacts
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.hypothesis/
+.tox/
+.nox/
+.coverage
+.coverage.*
+htmlcov/
+
+# Jupyter
+.ipynb_checkpoints/
+
+# Streamlit local state
+.streamlit/secrets.toml
+
+# Local environment / secrets
+.env
+.env.*
+*.local
+
+# Local-only project files (not committed)
+CLAUDE.md
+data/
+output/
+
+# Git hooks
+.githooks/.sanitize-map
+
+# Logs and temp files
+*.log
+*.tmp
+*.swp
+
+# OS / editor files
+.DS_Store
+._*
+.AppleDouble
+.LSOverride
+.fseventsd
+.TemporaryItems
+.Spotlight-V100
+.Trashes
+Thumbs.db
+ehthumbs.db
+.vscode/
+.idea/
+*.swo
+
+# Windows Zone.Identifier ADS copies
+*:Zone.Identifier
+*.Zone.Identifier

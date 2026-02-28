@@ -1,0 +1,7 @@
+name: renewal_radar_env
+channels:
+  - snowflake
+dependencies:
+  - streamlit=1.52.*
+  - altair
+  - pandas
