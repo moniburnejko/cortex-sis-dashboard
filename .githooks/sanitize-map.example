@@ -5,7 +5,7 @@
 #
 # to restore real names locally, run: .githooks/sanitize.sh --reverse
 #
-# IMPORTANT: .githooks/.sanitize-map is gitignored. never commit the real mapping file.
+# IMPORTANT: .githooks/.sanitize-map is gitignored
 
 # database
 YOUR_REAL_DATABASE=CORTEX_DB
@@ -19,8 +19,8 @@ YOUR_REAL_WAREHOUSE=CORTEX_WH
 # role
 YOUR_REAL_ROLE=CORTEX_ADMIN
 
-# snowflake account identifier (from CURRENT_ACCOUNT())
+# snowflake account identifier
 YOUR_REAL_ACCOUNT=CORTEX_ACCOUNT
 
-# snowflake organization name (from app URL: app.snowflake.com/{org}/{locator}/)
+# snowflake organization name
 YOUR_REAL_ORG=CORTEX_ORG

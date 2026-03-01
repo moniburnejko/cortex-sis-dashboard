@@ -10,8 +10,6 @@
 #   --reverse   replace placeholders with real names (for local work)
 #   --dry-run   show what would be changed without modifying files
 #
-# if no files are specified and --staged is not used, operates on all
-# tracked files in the repository.
 
 set -euo pipefail
 
@@ -19,7 +17,7 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
 MAP_FILE="$SCRIPT_DIR/.sanitize-map"
 
-# --- helpers ----------------------------------------------------------------
+# helpers
 
 die() { echo "error: $1" >&2; exit 1; }
 
@@ -65,7 +63,7 @@ is_binary() {
     return 1
 }
 
-# --- modes ------------------------------------------------------------------
+# modes
 
 do_check() {
     local found=0
@@ -153,7 +151,7 @@ do_replace() {
     MODIFIED_FILES=("${modified_files[@]+"${modified_files[@]}"}")
 }
 
-# --- main -------------------------------------------------------------------
+#  main 
 
 MODE="sanitize"
 USE_STAGED=false
