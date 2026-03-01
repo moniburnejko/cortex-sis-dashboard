@@ -12,10 +12,10 @@
 phase 1 establishes everything needed before any dashboard code is written:
 
 - **prompt 1 (infrastructure):**
-  - create logging objects: APP_EVENTS, AUDIT_LOG, V_APP_EVENTS, LOG_AUDIT_EVENT
-  - create domain table: RENEWAL_FLAGS
-  - create stage: STAGE_RAW_CSV
-  - create 3 source tables: FACT_RENEWAL, FACT_PREMIUM_EVENT, DIM_POLICY
+  - create logging objects: `APP_EVENTS`, `AUDIT_LOG`, `V_APP_EVENTS`, `LOG_AUDIT_EVENT`
+  - create domain table: `RENEWAL_FLAGS`
+  - create stage: `STAGE_RAW_CSV`
+  - create 3 source tables: `FACT_RENEWAL`, `FACT_PREMIUM_EVENT`, `DIM_POLICY`
   - no data loaded yet
 - **prompt 2 (data load):**
   - validate 3 local csv files
@@ -64,18 +64,18 @@ skill-bypass gap found in run_01. see section 10 for context.
 
 ### skill constraints
 
-- `$ check-local-environment` completed: do NOT run `snow` CLI commands or environment checks manually afterward
+- `$ check-local-environment` completed: do NOT run `snow` cli commands or environment checks manually afterward
 - `$ check-snowflake-context` completed: do NOT run context queries via `snow sql` or `SNOWFLAKE_SQL_EXECUTE` afterward
 - `$ prepare-data` required: do NOT run PUT, COPY INTO, gzip, or csv validation manually
-- `$ sis-dashboard deploy-and-verify` required: do NOT run acceptance SQL manually
+- `$ sis-dashboard deploy-and-verify` required: do NOT run acceptance sql manually
 
 ### session start gate
 
-before any DDL, data loading, or code generation:
+before any ddl, data loading, or code generation:
 - [ ] `$ check-local-environment` passed
 - [ ] `$ check-snowflake-context` passed
 
-### DDL rule
+### ddl rule
 
 `CREATE OR ALTER TABLE` for all tables. views: `CREATE OR REPLACE VIEW`. procedures: `CREATE OR REPLACE PROCEDURE`.
 
@@ -108,13 +108,13 @@ both session-start skills were invoked in the correct order.
 
 | step | command | result |
 |---|---|---|
-| check Python | `python3 --version` | Python 3.12.3 |
+| check python | `python3 --version` | Python 3.12.3 |
 | check config.toml | `stat ~/.snowflake/config.toml` | file present, 497 bytes |
-| check snow CLI | `snow --version` | 3.15.0 |
+| check snow cli | `snow --version` | 3.15.0 |
 | list connections | `snow connection list` | pl_agents_team listed |
 | test connection | `snow connection test` | connection valid |
 
-all 5 steps completed. minor: Python checked first instead of last (step order inverted vs skill spec).
+all 5 steps completed. minor: python checked first instead of last (step order inverted vs skill spec).
 outcome identical.
 
 **`$ check-snowflake-context` - invoked**
@@ -122,7 +122,7 @@ outcome identical.
 | step | command | result |
 |---|---|---|
 | query context | `SELECT CURRENT_ACCOUNT()...` | all values match AGENTS.md |
-| check AUDIT_LOG | `SELECT COUNT(*) FROM AUDIT_LOG LIMIT 1` | accessible |
+| check `AUDIT_LOG` | `SELECT COUNT(*) FROM AUDIT_LOG LIMIT 1` | accessible |
 | verify schema | `SHOW SCHEMAS LIKE 'CORTEX_SCHEMA'` | exists, 1 row |
 | verify stage | `SHOW STAGES LIKE 'STAGE_RAW_CSV'` | exists, 1 row |
 
@@ -130,28 +130,28 @@ all context values matched. no USE statements needed. session start gate passed.
 
 ---
 
-### DDL execution
+### ddl execution
 
-all DDL used correct idempotent patterns. executed in this order:
+all ddl used correct idempotent patterns. executed in this order:
 
-| object | type | DDL used | result |
+| object | type | ddl used | result |
 |---|---|---|---|
-| APP_EVENTS | event table | `CREATE EVENT TABLE IF NOT EXISTS` | already existed |
-| AUDIT_LOG | table | `CREATE OR ALTER TABLE` | created, 36 cols, search opt, clustering |
-| V_APP_EVENTS | view | `CREATE OR REPLACE VIEW` | created |
-| LOG_AUDIT_EVENT | procedure | `CREATE OR REPLACE PROCEDURE` | created |
-| RENEWAL_FLAGS | domain table | `CREATE OR ALTER TABLE` | created |
-| STAGE_RAW_CSV | stage | `CREATE STAGE IF NOT EXISTS` | already existed |
-| FACT_RENEWAL | source table | `CREATE OR ALTER TABLE` | created |
-| FACT_PREMIUM_EVENT | source table | `CREATE OR ALTER TABLE` | created |
-| DIM_POLICY | source table | `CREATE OR ALTER TABLE` | created |
+| `APP_EVENTS` | event table | `CREATE EVENT TABLE IF NOT EXISTS` | already existed |
+| `AUDIT_LOG` | table | `CREATE OR ALTER TABLE` | created, 36 cols, search opt, clustering |
+| `V_APP_EVENTS` | view | `CREATE OR REPLACE VIEW` | created |
+| `LOG_AUDIT_EVENT` | procedure | `CREATE OR REPLACE PROCEDURE` | created |
+| `RENEWAL_FLAGS` | domain table | `CREATE OR ALTER TABLE` | created |
+| `STAGE_RAW_CSV` | stage | `CREATE STAGE IF NOT EXISTS` | already existed |
+| `FACT_RENEWAL` | source table | `CREATE OR ALTER TABLE` | created |
+| `FACT_PREMIUM_EVENT` | source table | `CREATE OR ALTER TABLE` | created |
+| `DIM_POLICY` | source table | `CREATE OR ALTER TABLE` | created |
 
-note: FACT_RENEWAL (50k), FACT_PREMIUM_EVENT (94k), DIM_POLICY (36k) already had data from a prior session.
+note: `FACT_RENEWAL` (50k), `FACT_PREMIUM_EVENT` (94k), `DIM_POLICY` (36k) already had data from a prior session.
 `CREATE OR ALTER TABLE` preserved it correctly.
 
-### post-DDL verification
+### post-ddl verification
 
-the agent ran object existence queries and stopped. no acceptance SQL run per updated prompt 1.
+the agent ran object existence queries and stopped. no acceptance sql run per updated prompt 1.
 
 ---
 
@@ -182,7 +182,7 @@ both skills invoked again in the new session, in the correct order.
 | step | command | result |
 |---|---|---|
 | check config.toml | `stat ~/.snowflake/config.toml` | present |
-| check snow CLI | `snow --version` | 3.15.0 |
+| check snow cli | `snow --version` | 3.15.0 |
 | list connections | `snow connection list` | pl_agents_team |
 | python (first attempt) | `python --version` | command not found |
 | test connection | `snow connection test` | valid |
@@ -201,7 +201,7 @@ per skill step 5.
 | database | CORTEX_DB | CORTEX_DB | yes |
 | schema | CORTEX_SCHEMA | CORTEX_SCHEMA | yes |
 
-schema, stage, and AUDIT_LOG all confirmed. session start gate passed.
+schema, stage, and `AUDIT_LOG` all confirmed. session start gate passed.
 
 ---
 
@@ -259,9 +259,9 @@ option 3. truncate was justified.
 
 | table | expected | actual | tolerance |
 |---|---|---|---|
-| FACT_RENEWAL | ~50k | 50,000 | within ±5% |
-| FACT_PREMIUM_EVENT | ~94k | 94,642 | within ±5% |
-| DIM_POLICY | ~36k | 36,298 | within ±5% |
+| `FACT_RENEWAL` | ~50k | 50,000 | within +-5% |
+| `FACT_PREMIUM_EVENT` | ~94k | 94,642 | within +-5% |
+| `DIM_POLICY` | ~36k | 36,298 | within +-5% |
 
 ---
 
@@ -290,13 +290,13 @@ project location and ran all 8 phase-1 checks via `snow sql` bash commands:
 
 | # | criterion | expected | actual | status |
 |---|---|---|---|---|
-| 1 | RENEWAL_FLAGS exists | 1 | 1 | PASS |
-| 2 | FACT_RENEWAL row count | ~50k | 50,000 | PASS |
-| 3 | FACT_PREMIUM_EVENT row count | ~94k | 94,642 | PASS |
-| 4 | DIM_POLICY row count | ~36k | 36,298 | PASS |
-| 5 | APP_EVENTS + AUDIT_LOG exist | 2 | 2 | PASS |
-| 6 | V_APP_EVENTS view exists | 1 | 1 | PASS |
-| 7 | LOG_AUDIT_EVENT procedure exists | 1 row | 1 row | PASS |
+| 1 | `RENEWAL_FLAGS` exists | 1 | 1 | PASS |
+| 2 | `FACT_RENEWAL` row count | ~50k | 50,000 | PASS |
+| 3 | `FACT_PREMIUM_EVENT` row count | ~94k | 94,642 | PASS |
+| 4 | `DIM_POLICY` row count | ~36k | 36,298 | PASS |
+| 5 | `APP_EVENTS` + `AUDIT_LOG` exist | 2 | 2 | PASS |
+| 6 | `V_APP_EVENTS` view exists | 1 | 1 | PASS |
+| 7 | `LOG_AUDIT_EVENT` procedure exists | 1 row | 1 row | PASS |
 | 8 | agent operations logged | >= 1 | 2 | PASS |
 
 all 8/8 passed. agent stopped and waited for confirmation.
@@ -322,7 +322,7 @@ skills invoked: 2/2 for prompt 1, 4/4 for prompt 2.
 
 ## 7. deviations
 
-### deviation 1: post-DDL verification queries run manually (prompt 1)
+### deviation 1: post-ddl verification queries run manually (prompt 1)
 
 **what happened:** the agent ran object existence queries (SHOW, SELECT COUNT, INFORMATION_SCHEMA)
 to report what was created, without invoking `$ sis-dashboard deploy-and-verify`.
@@ -441,7 +441,7 @@ from the prompt.
 clarifying that `$ sis-streamlit` should not be invoked directly.
 
 **post-session follow-up** - the project skill was renamed from `developing-with-streamlit` to
-`sis-streamlit` to eliminate name collision with the global Snowflake skill of the same name.
+`sis-streamlit` to eliminate name collision with the global snowflake skill of the same name.
 all routing table paths, `$` invocation references, and documentation updated accordingly.
 
 this closes deviation 3.
@@ -456,7 +456,7 @@ this closes deviation 3.
 | `$ prepare-data` invoked | no (1st attempt) / yes (2nd after correction) | yes |
 | gzip compression | skipped (1st attempt) | correct |
 | TRUNCATE before reload | yes (2nd attempt) | yes (permission given via option 3) |
-| LOG_AUDIT_EVENT called | yes (2nd attempt) | yes |
+| `LOG_AUDIT_EVENT` called | yes (2nd attempt) | yes |
 | `$ sis-dashboard` for acceptance checks | no (run manually) | yes |
 | path error during skill routing | no | yes - recovered via GLOB |
 | unnecessary ASK_USER_QUESTION | no | yes (phase selection) |
@@ -475,7 +475,7 @@ the following changes were applied between run_01 and run_02 to address deviatio
 - prompts.md prompt 4: "run the full acceptance check" changed to "use $ sis-dashboard to run the
   full acceptance check."
 - AGENTS.md done criteria (phases 1, 2, 3): updated to `run $ sis-dashboard -> deploy-and-verify`
-  with "do NOT run these SQL checks manually" added at each phase.
+  with "do NOT run these sql checks manually" added at each phase.
 
 ---
 
@@ -488,7 +488,7 @@ the following changes were applied between run_01 and run_02 to address deviatio
   personal skills but its sub-skills are in the project, invoking the parent directly causes sub-skill
   path resolution to fail. the fix is to route through a project-level skill (`$ sis-dashboard`) which
   always has correct relative paths. additionally, renaming the personal skill (`sis-streamlit`) to
-  differ from the global Snowflake skill eliminates name confusion at the agent level. see change 2.
+  differ from the global snowflake skill eliminates name confusion at the agent level. see change 2.
 - naming the skill explicitly in the prompt (`use $ sis-dashboard`) is the reliable way to enforce
   skill invocation. AGENTS.md mandates and prohibitions alone are not sufficient when the agent can
   choose between multiple valid paths to the same outcome.

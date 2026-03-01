@@ -15,11 +15,11 @@ were not caught by the agent's pre-deploy scans or final verification.
 
 | # | category | severity | description |
 |---|---|---|---|
-| 1.1 | SQL injection | critical | flag_reason (user text input) directly in INSERT f-string |
-| 1.2 | SQL injection | critical | review_notes (user text input) directly in UPDATE f-string |
-| 1.3 | SQL injection | low | CURRENT_SIS_USER (system value) in INSERT/UPDATE f-strings |
-| 1.4 | SQL injection | low | whitelist-validated filter values in SELECT f-strings via .join() |
-| 1.5 | SQL injection | minimal | date values from date_input in SELECT f-strings |
+| 1.1 | sql injection | critical | flag_reason (user text input) directly in INSERT f-string |
+| 1.2 | sql injection | critical | review_notes (user text input) directly in UPDATE f-string |
+| 1.3 | sql injection | low | CURRENT_SIS_USER (system value) in INSERT/UPDATE f-strings |
+| 1.4 | sql injection | low | whitelist-validated filter values in SELECT f-strings via .join() |
+| 1.5 | sql injection | minimal | date values from date_input in SELECT f-strings |
 | 2 | missing feature | high | FILTER_CHANGE audit logging absent (required by AGENTS.md) |
 | 3 | missing feature | medium | flag_id not returned/shown after INSERT (required by AGENTS.md) |
 | 4 | filter gap | medium | heatmap ignores segment and channel filters |
@@ -28,7 +28,7 @@ were not caught by the agent's pre-deploy scans or final verification.
 
 ---
 
-## 1. SQL injection vulnerabilities
+## 1. sql injection vulnerabilities
 
 ### 1.1 critical: flag_reason user input in INSERT (line 557-565)
 
@@ -51,11 +51,11 @@ session.sql(f"""
 '); DROP TABLE RENEWAL_FLAGS; --
 ```
 
-this would produce valid SQL that drops the table. the scope_region, scope_segment,
+this would produce valid sql that drops the table. the scope_region, scope_segment,
 scope_channel values are constrained by selectbox options (whitelist-safe), but flag_reason
 is free-form text with no sanitization.
 
-**fix:** use `session.call()` with a stored procedure, or use Snowpark DataFrame API:
+**fix:** use `session.call()` with a stored procedure, or use snowpark DataFrame api:
 
 ```python
 from snowflake.snowpark.functions import lit, current_timestamp
@@ -65,7 +65,7 @@ session.table(f"{DATABASE}.{SCHEMA}.RENEWAL_FLAGS").insert([
 ])
 ```
 
-or create a dedicated INSERT procedure similar to LOG_AUDIT_EVENT:
+or create a dedicated INSERT procedure similar to `LOG_AUDIT_EVENT`:
 
 ```python
 session.call(
@@ -96,14 +96,14 @@ flag_ids come from the data_editor, but the values originate from the database -
 
 **fix:** same approach as 1.1 - use session.call() with a stored procedure for the UPDATE.
 
-### 1.3 low: CURRENT_SIS_USER in SQL (lines 560, 663, 667)
+### 1.3 low: CURRENT_SIS_USER in sql (lines 560, 663, 667)
 
 `CURRENT_SIS_USER` is `st.user.user_name or "unknown"`. this is a system-provided value
 (not user-editable input), so injection risk is low. however, it is still interpolated
-directly into f-string SQL on multiple lines. for consistency with parameterized SQL practices,
+directly into f-string sql on multiple lines. for consistency with parameterized sql practices,
 it should be passed as a procedure parameter.
 
-### 1.4 low: whitelist-validated filter values in SQL (lines 232-236, 418-422)
+### 1.4 low: whitelist-validated filter values in sql (lines 232-236, 418-422)
 
 ```python
 # dashboard.py line 232-234
@@ -117,7 +117,7 @@ the `regions`, `segments`, `channels` values are whitelist-validated:
 valid_sel_regions = [r for r in sel_regions if r in VALID_REGIONS]
 ```
 
-this means only values that exist in the database can appear in the SQL. practical injection
+this means only values that exist in the database can appear in the sql. practical injection
 risk is negligible. however, this pattern violates AGENTS.md security rule 3 which specifies:
 
 ```python
@@ -125,22 +125,22 @@ selected = [r for r in user_selected if r in VALID_REGIONS]
 df = session.table(...).filter(col("region").isin(selected))
 ```
 
-the spec requires Snowpark DataFrame API (session.table().filter()), not f-string SQL.
-the agent used f-string SQL with whitelist validation instead.
+the spec requires snowpark DataFrame api (`session.table().filter()`), not f-string sql.
+the agent used f-string sql with whitelist validation instead.
 
-**fix:** rewrite load_trend_data and load_outcome_premium_data to use Snowpark DataFrame API
-with DATE_TRUNC applied via Snowpark functions, or keep the current approach and document
-the exception in AGENTS.md (whitelist-validated f-string SQL for aggregate queries with
-DATE_TRUNC, which has no Snowpark equivalent).
+**fix:** rewrite load_trend_data and load_outcome_premium_data to use snowpark DataFrame api
+with DATE_TRUNC applied via snowpark functions, or keep the current approach and document
+the exception in AGENTS.md (whitelist-validated f-string sql for aggregate queries with
+DATE_TRUNC, which has no snowpark equivalent).
 
-### 1.5 minimal: date values in SQL (lines 235-236, 422)
+### 1.5 minimal: date values in sql (lines 235-236, 422)
 
 ```python
 AND renewal_date >= '{date_from}'
 AND renewal_date <= '{date_to}'
 ```
 
-`date_from` and `date_to` come from `st.date_input()` which returns Python `datetime.date`
+`date_from` and `date_to` come from `st.date_input()` which returns python `datetime.date`
 objects. these are not user-typeable strings, so injection risk is minimal. the date_input
 widget constrains values to valid dates within min/max bounds.
 
@@ -177,7 +177,7 @@ SELECT COUNT(*) FROM AUDIT_LOG WHERE action_type='FILTER_CHANGE';  -- >= 1
 
 the agent's final verification reported 30 FILTER_CHANGE events. these exist from a prior
 dashboard version that DID have filter logging (likely from run_03 or run_04). the current
-dashboard.py does not produce them. if AUDIT_LOG were cleared, this check would fail.
+dashboard.py does not produce them. if `AUDIT_LOG` were cleared, this check would fail.
 
 **fix:** add `on_change` callbacks to the sidebar multiselect and date_input widgets:
 
@@ -193,7 +193,7 @@ sel_regions = st.sidebar.multiselect(
 )
 ```
 
-note: `on_change` requires careful implementation in SiS to avoid spurious logging on first
+note: `on_change` requires careful implementation in sis to avoid spurious logging on first
 render. the session state initialization with actual defaults (lines 117-126) should prevent
 this, but testing is required.
 
@@ -217,7 +217,7 @@ show st.success() with the returned flag_id
 st.success(f"Flag submitted successfully: {scope}")
 ```
 
-the INSERT statement (lines 557-565) does not return the generated flag_id UUID.
+the INSERT statement (lines 557-565) does not return the generated flag_id uuid.
 st.success shows the scope (e.g. "REGION_SEGMENT") instead of the flag_id.
 
 **fix option 1:** query the last inserted flag_id after INSERT:
@@ -237,7 +237,7 @@ flag_id = session.call(f"{DATABASE}.{SCHEMA}.INSERT_RENEWAL_FLAG", ...)
 st.success(f"Flag submitted: {flag_id}")
 ```
 
-option 2 is preferred because it also resolves issue 1.1 (SQL injection).
+option 2 is preferred because it also resolves issue 1.1 (sql injection).
 
 **AGENTS.md change:** clarify the flag_id return mechanism. currently the spec says "show
 st.success() with the returned flag_id" but does not specify how to obtain it from the INSERT.
@@ -259,7 +259,7 @@ def load_heatmap_data(regions, segments, channels, date_from, date_to, final_onl
 the function accepts `segments` and `channels` parameters but only applies region filtering
 after the pandas conversion. segment and channel filters from the sidebar are ignored.
 
-the SQL query itself (lines 457-471) does not include segment or channel in its WHERE clause
+the sql query itself (lines 457-471) does not include segment or channel in its WHERE clause
 either. this means the heatmap always shows data across all segments and all channels,
 regardless of sidebar filter selections.
 
@@ -272,7 +272,7 @@ df = df[
 ]
 ```
 
-note: the heatmap SQL query selects from FACT_PREMIUM_EVENT which has segment and channel
+note: the heatmap sql query selects from `FACT_PREMIUM_EVENT` which has segment and channel
 columns, so this filter will work correctly.
 
 **AGENTS.md change:** add an explicit note to the page 2 heatmap spec that all sidebar
@@ -355,7 +355,7 @@ these two skill files contradict each other. the scaffold template (which the ag
 when generating code) says module level. the sis-patterns guidance (which the agent reads
 before writing code) says inside functions only.
 
-the practical impact in SiS warehouse runtime is negligible - the session is valid for the
+the practical impact in sis warehouse runtime is negligible - the session is valid for the
 entire app lifecycle. however, the contradiction causes inconsistency: cached data loader
 functions (load_filter_options, load_kpi_data, etc.) correctly call `get_active_session()`
 inside the function, while non-cached functions use the module-level `session` variable.
@@ -363,8 +363,8 @@ inside the function, while non-cached functions use the module-level `session` v
 **fix:** resolve the contradiction in one of two ways:
 
 option A (keep module-level): update sis-patterns to clarify that module-level session is
-acceptable for non-cached code, but cached functions (@st.cache_data) MUST call
-get_active_session() inside the function because the module-level reference is not picklable.
+acceptable for non-cached code, but cached functions (`@st.cache_data`) MUST call
+`get_active_session()` inside the function because the module-level reference is not picklable.
 
 option B (enforce inside-functions): update the scaffold template to remove module-level
 session and add a helper function:
@@ -373,13 +373,13 @@ def get_session():
     return get_active_session()
 ```
 
-option A is recommended because it matches the actual SiS behavior and the scaffold template.
+option A is recommended because it matches the actual sis behavior and the scaffold template.
 
 ---
 
 ## 7. recommendations for AGENTS.md
 
-### 7.1 expand security rule 3: parameterized DML with user input
+### 7.1 expand security rule 3: parameterized dml with user input
 
 current rule 3 (line 752-758) covers IN-list filter validation only. it does not mention
 INSERT or UPDATE statements with user-supplied text fields.
@@ -387,13 +387,13 @@ INSERT or UPDATE statements with user-supplied text fields.
 **add to security rule 3:**
 
 ```
-all DML (INSERT, UPDATE, DELETE) with user-supplied text values (st.text_input, st.text_area,
+all dml (INSERT, UPDATE, DELETE) with user-supplied text values (st.text_input, st.text_area,
 st.data_editor) MUST use session.call() with a stored procedure. f-string interpolation of
-user text into SQL is a SQL injection vulnerability.
+user text into sql is a sql injection vulnerability.
 
-allowed in f-string SQL: DATABASE, SCHEMA, APP_NAME constants only.
+allowed in f-string sql: DATABASE, SCHEMA, APP_NAME constants only.
 allowed with whitelist validation: selectbox/multiselect values validated against VALID_* lists.
-NOT allowed in f-string SQL: text_input, text_area, data_editor free-text values.
+NOT allowed in f-string sql: text_input, text_area, data_editor free-text values.
 ```
 
 ### 7.2 add FILTER_CHANGE as mandatory feature
@@ -417,7 +417,7 @@ update the flag submission spec (line 671-673) to specify the mechanism:
 
 ```
 after INSERT: query the inserted flag_id and show it in st.success().
-preferred: create INSERT_RENEWAL_FLAG procedure that returns the UUID.
+preferred: create INSERT_RENEWAL_FLAG procedure that returns the uuid.
 ```
 
 ### 7.4 heatmap filter completeness
@@ -442,15 +442,15 @@ invoke $ sis-streamlit first, then the sub-skill according to the routing instru
 
 ## 8. recommendations for skills/
 
-### 8.1 build-dashboard scan mode: user input in DML
+### 8.1 build-dashboard scan mode: user input in dml
 
 add to scan mode step 3 (after the session.sql(f check):
 
 ```
-check for user text input in DML statements:
+check for user text input in dml statements:
 - grep for st.text_input and st.text_area variable names
 - trace each variable to see if it appears inside session.sql(f"...")
-- violation: any user text variable interpolated into INSERT, UPDATE, or DELETE SQL
+- violation: any user text variable interpolated into INSERT, UPDATE, or DELETE sql
 - fix: use session.call() with stored procedure
 ```
 
@@ -493,8 +493,8 @@ renewal outcome colors:
 
 ### 9.1 add code review prompt
 
-current prompt 4 focuses on phase 3 SQL acceptance checks (row counts, event counts).
-it does not cover code quality, SQL injection, or spec compliance of the deployed code.
+current prompt 4 focuses on phase 3 sql acceptance checks (row counts, event counts).
+it does not cover code quality, sql injection, or spec compliance of the deployed code.
 
 consider adding a post-deployment code review prompt:
 
@@ -502,7 +502,7 @@ consider adding a post-deployment code review prompt:
 prompt 5 (code review):
 run $ sis-streamlit -> build-dashboard dashboard.py (full scan mode).
 then verify:
-1. all SQL injection patterns from scan mode step 3 return 0 violations
+1. all sql injection patterns from scan mode step 3 return 0 violations
 2. all audit logging events specified in AGENTS.md exist in the code
 3. all sidebar filters apply to every query on every page
 4. flag submission returns and displays flag_id

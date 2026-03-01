@@ -3,7 +3,7 @@
 **date:** 2026-02-28
 **session:** cortex code cli, prompt 1 only - partial run, interrupted
 **environment:** CORTEX_DB.CORTEX_SCHEMA, role CORTEX_ADMIN, warehouse CORTEX_WH
-**final outcome:** interrupted mid-DDL - AUDIT_LOG created with wrong DDL syntax; remaining objects not created
+**final outcome:** interrupted mid-ddl - `AUDIT_LOG` created with wrong ddl syntax; remaining objects not created
 
 ---
 
@@ -32,22 +32,22 @@ however, after each skill the agent ran additional manual commands anyway:
 
 these manual commands are explicitly prohibited by the skill constraints.
 
-### DDL executed
+### ddl executed
 
 | object | type | result |
 |---|---|---|
-| APP_EVENTS | event table | already existed |
-| AUDIT_LOG | table | created - but with `CREATE OR REPLACE TABLE` (violation) |
-| AUDIT_LOG search optimization | ALTER | applied |
-| AUDIT_LOG clustering | ALTER | applied |
-| V_APP_EVENTS | view | cancelled |
-| LOG_AUDIT_EVENT | procedure | cancelled |
+| `APP_EVENTS` | event table | already existed |
+| `AUDIT_LOG` | table | created - but with `CREATE OR REPLACE TABLE` (violation) |
+| `AUDIT_LOG` search optimization | ALTER | applied |
+| `AUDIT_LOG` clustering | ALTER | applied |
+| `V_APP_EVENTS` | view | cancelled |
+| `LOG_AUDIT_EVENT` | procedure | cancelled |
 
-remaining objects (RENEWAL_FLAGS, stage, source tables) were not reached.
+remaining objects (`RENEWAL_FLAGS`, stage, source tables) were not reached.
 
 ### interruption
 
-the session was interrupted after noticing `CREATE OR REPLACE TABLE` on AUDIT_LOG.
+the session was interrupted after noticing `CREATE OR REPLACE TABLE` on `AUDIT_LOG`.
 AGENTS.md specifies `CREATE OR ALTER TABLE` for all tables. the agent acknowledged
 the error and confirmed the correct rule. session ended.
 
@@ -59,11 +59,11 @@ the error and confirmed the correct rule. session ended.
 
 **what happened:** agent used `CREATE OR REPLACE TABLE` instead of `CREATE OR ALTER TABLE`.
 
-**root cause:** `CREATE OR REPLACE` is the dominant pattern in Snowflake training data.
+**root cause:** `CREATE OR REPLACE` is the dominant pattern in snowflake training data.
 the rule was present in AGENTS.md but not visually prominent - it appeared as prose in a section header,
-not as a dedicated callout block near the DDL.
+not as a dedicated callout block near the ddl.
 
-**consequence:** the AUDIT_LOG table was dropped and recreated. since it was empty (new session),
+**consequence:** the `AUDIT_LOG` table was dropped and recreated. since it was empty (new session),
 no data was lost in this run. in a resumed session this would destroy existing audit rows.
 
 **status:** addressed - see section 4.
@@ -72,7 +72,7 @@ no data was lost in this run. in a resumed session this would destroy existing a
 
 ### deviation 2: manual commands after skill completion
 
-**what happened:** after both session-start skills completed, the agent ran manual `snow` CLI
+**what happened:** after both session-start skills completed, the agent ran manual `snow` cli
 and `snow sql` context queries that the skills had already covered.
 
 **root cause:** the skill constraints were in a table column ("constraint") which has lower
@@ -87,37 +87,37 @@ gate in AGENTS.md is intended to prevent exactly this pattern.
 
 ## 4. AGENTS.md changes made after session
 
-five changes were applied in this conversation (outside cortex code cli).
+five changes were applied in a follow-up repository maintenance session (outside cortex code cli).
 
-**change 1: DDL callout blocks added**
+**change 1: ddl callout blocks added**
 
-two `> **DDL rule - no exceptions:**` callout blocks added - one before source table DDL,
-one before logging infrastructure DDL. each block states the rule explicitly and explains
+two `> **DDL rule - no exceptions:**` callout blocks added - one before source table ddl,
+one before logging infrastructure ddl. each block states the rule explicitly and explains
 why it matters (data destruction). the second callout also clarifies:
-- `CREATE OR ALTER VIEW` does not exist in Snowflake - views use `CREATE OR REPLACE VIEW` (safe, no data)
+- `CREATE OR ALTER VIEW` does not exist in snowflake - views use `CREATE OR REPLACE VIEW` (safe, no data)
 - `LOG_AUDIT_EVENT` procedure uses `CREATE OR REPLACE PROCEDURE` - intentional and correct
 
-**change 2: V_APP_EVENTS DDL corrected**
+**change 2: V_APP_EVENTS ddl corrected**
 
 `CREATE OR ALTER VIEW` changed to `CREATE OR REPLACE VIEW`. this was the direct cause of the
 "malformed view" error seen in previous sessions - `CREATE OR ALTER VIEW` is not a valid
-Snowflake syntax. views do not store data, so replacing them is always safe.
+snowflake syntax. views do not store data, so replacing them is always safe.
 
-**change 3: page 1 KPI column names corrected**
+**change 3: page 1 kpi column names corrected**
 
-the dashboard spec for page 1 referenced two columns that do not exist in FACT_RENEWAL:
+the dashboard spec for page 1 referenced two columns that do not exist in `FACT_RENEWAL`:
 - `quote_status` - does not exist; correct columns are `is_quoted` and `is_bound`
 - `service_delay_days` - does not exist; correct expression is `quote_tta / target_tta_hours`
 
 formulas corrected to match both the source table schema and the "key business metrics" section.
 
-**change 4: stage DDL section added**
+**change 4: stage ddl section added**
 
 `CREATE STAGE IF NOT EXISTS {database}.{schema}.{stage}` was only mentioned conditionally in the
 data loading instructions. a dedicated `## stage (create in phase 1)` section added between
-RENEWAL_FLAGS and logging infrastructure, with confirmation query.
+`RENEWAL_FLAGS` and logging infrastructure, with confirmation query.
 
-**change 5: skills constraints and SiS forbidden patterns restructured**
+**change 5: skills constraints and sis forbidden patterns restructured**
 
 both sections were converted from table columns (low visual weight) to dedicated `> **...:**`
 callout blocks placed immediately after the relevant reference table. each constraint is now
@@ -127,13 +127,13 @@ a clearly separated bullet point with explicit "do NOT" language.
 
 ## 4b. skill changes made after session
 
-one change was applied to the skill library in a follow-up conversation (outside cortex code cli).
+one change was applied to the skill library in a follow-up repository maintenance session (outside cortex code cli).
 
 **change 1: connections.toml renamed to config.toml in all skill files**
 
 **what happened:** `snow connection list` failed with `'String' object has no attribute 'items'`
 during the `check-local-environment` run. the error was caused by `default_connection_name`
-being present in `~/.snowflake/connections.toml` - Snow CLI 3.x only supports this key in
+being present in `~/.snowflake/connections.toml` - snow cli 3.x only supports this key in
 `~/.snowflake/config.toml`. the file had to be renamed to fix the issue.
 
 **files updated:**
@@ -143,15 +143,15 @@ being present in `~/.snowflake/connections.toml` - Snow CLI 3.x only supports th
 - `skills/README.md` - check-local-environment description
 - `skills/developing-with-streamlit/skills/deploy-and-verify/references/snow-streamlit-cli.md` - `--connection` flag description and notes section
 
-**root cause:** Snow CLI 3.x expects `config.toml` as the main config file. `connections.toml`
+**root cause:** snow cli 3.x expects `config.toml` as the main config file. `connections.toml`
 is a legacy name that does not support top-level keys like `default_connection_name`.
-when Snow CLI reads `connections.toml` and finds that key as a string, calling `.items()` on it fails.
+when snow cli reads `connections.toml` and finds that key as a string, calling `.items()` on it fails.
 
 ---
 
 ## 5. lessons learned
 
 - callout blocks (`> **rule:**`) outperform table columns for constraints that must not be missed. tables are good for reference; callouts are good for enforcement.
-- `CREATE OR ALTER VIEW` does not exist in Snowflake - this is a hard syntax error, not a policy preference. views always use `CREATE OR REPLACE VIEW`.
+- `CREATE OR ALTER VIEW` does not exist in snowflake - this is a hard syntax error, not a policy preference. views always use `CREATE OR REPLACE VIEW`.
 - even when skills are invoked correctly, agents may run equivalent manual commands in parallel. constraints need to say "do NOT run X afterward", not just "invoke the skill".
-- Snow CLI 3.x requires `~/.snowflake/config.toml` as the main config file. `connections.toml` does not support `default_connection_name` - renaming the file is the fix.
+- snow cli 3.x requires `~/.snowflake/config.toml` as the main config file. `connections.toml` does not support `default_connection_name` - renaming the file is the fix.

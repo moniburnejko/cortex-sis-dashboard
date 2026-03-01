@@ -12,10 +12,10 @@
 phase 1 establishes everything needed before any dashboard code is written:
 
 - **prompt 1 (infrastructure):**
-   - create logging objects: APP_EVENTS, AUDIT_LOG, V_APP_EVENTS, LOG_AUDIT_EVENT
-   - create domain table: RENEWAL_FLAGS
-   - create stage: STAGE_RAW_CSV
-   - create 3 source tables: FACT_RENEWAL, FACT_PREMIUM_EVENT, DIM_POLICY
+   - create logging objects: `APP_EVENTS`, `AUDIT_LOG`, `V_APP_EVENTS`, `LOG_AUDIT_EVENT`
+   - create domain table: `RENEWAL_FLAGS`
+   - create stage: `STAGE_RAW_CSV`
+   - create 3 source tables: `FACT_RENEWAL`, `FACT_PREMIUM_EVENT`, `DIM_POLICY`
    - no data loaded yet
 - **prompt 2 (data load):**
    - validate 3 local csv files
@@ -60,10 +60,10 @@ you should have used the prepare-data skill. please use skills as defined.
 
 | skill | when | note |
 |---|---|---|
-| `$ check-local-environment` | session start | verify snow CLI, connections.toml, Python |
+| `$ check-local-environment` | session start | verify snow cli, connections.toml, python |
 | `$ check-snowflake-context` | session start, after check-local-environment | verify role, warehouse, database, schema objects |
 | `$ prepare-data` | data loading | validate csv + PUT + COPY INTO + row count verify |
-| `$ deploy-and-verify phase-1` | after phase 1 | run SQL acceptance checks per phase |
+| `$ deploy-and-verify phase-1` | after phase 1 | run sql acceptance checks per phase |
 
 constraint added after session (see section 10):
 "when a task matches a skill listed above, you MUST invoke it using `$ skill-name`.
@@ -71,7 +71,7 @@ do NOT replicate the skill's steps manually."
 
 ### data loading instructions (AGENTS.md section)
 
-1. run `$ check-local-environment` to confirm snow CLI and connection.
+1. run `$ check-local-environment` to confirm snow cli and connection.
 2. confirm stage - if missing: `CREATE STAGE IF NOT EXISTS`.
 3. run `$ prepare-data` to validate csv files, PUT + COPY INTO, and verify row counts.
 4. log phase completion via `snow sql -q "CALL ... LOG_AUDIT_EVENT(...)"`.
@@ -106,7 +106,7 @@ none.
 
 ### what the agent did instead
 
-the agent skipped both session-start skills and ran a single SQL query directly:
+the agent skipped both session-start skills and ran a single sql query directly:
 
 ```sql
 SELECT CURRENT_ACCOUNT(), CURRENT_ROLE(), CURRENT_WAREHOUSE(), CURRENT_DATABASE(), CURRENT_SCHEMA()
@@ -119,27 +119,27 @@ result:
 | CORTEX_ACCOUNT | CORTEX_ADMIN | CORTEX_WH | CORTEX_DB | CORTEX_SCHEMA |
 
 all values matched AGENTS.md environment. the agent proceeded without verifying connections.toml
-permissions, snow CLI version, or Python availability (those are covered by check-local-environment).
+permissions, snow cli version, or python availability (those are covered by check-local-environment).
 it also did not verify the stage or schema existence explicitly via the check-snowflake-context steps.
 
-### DDL execution
+### ddl execution
 
-the agent executed all DDL from AGENTS.md in the correct order:
+the agent executed all ddl from AGENTS.md in the correct order:
 
 | object | type | result |
 |---|---|---|
-| APP_EVENTS | event table | already existed |
-| AUDIT_LOG | table | created with search optimization and clustering |
-| V_APP_EVENTS | view | created |
-| LOG_AUDIT_EVENT | procedure | created |
-| RENEWAL_FLAGS | domain table | created |
-| STAGE_RAW_CSV | internal stage | already existed |
-| FACT_RENEWAL | source table | created |
-| FACT_PREMIUM_EVENT | source table | created |
-| DIM_POLICY | source table | created |
+| `APP_EVENTS` | event table | already existed |
+| `AUDIT_LOG` | table | created with search optimization and clustering |
+| `V_APP_EVENTS` | view | created |
+| `LOG_AUDIT_EVENT` | procedure | created |
+| `RENEWAL_FLAGS` | domain table | created |
+| `STAGE_RAW_CSV` | internal stage | already existed |
+| `FACT_RENEWAL` | source table | created |
+| `FACT_PREMIUM_EVENT` | source table | created |
+| `DIM_POLICY` | source table | created |
 
-all DDL was idempotent as specified (CREATE OR ALTER, CREATE IF NOT EXISTS). the "already existed"
-results for APP_EVENTS and STAGE_RAW_CSV are expected and correct.
+all ddl was idempotent as specified (CREATE OR ALTER, CREATE IF NOT EXISTS). the "already existed"
+results for `APP_EVENTS` and `STAGE_RAW_CSV` are expected and correct.
 
 ### outcome
 
@@ -167,12 +167,12 @@ the agent ran the prepare-data workflow manually using bash commands:
    snow sql -q "PUT file:///...data/fact_renewal.csv @STAGE_RAW_CSV ..."
    snow sql -q "PUT file:///...data/fact_premium_event.csv @STAGE_RAW_CSV ..."
    ```
-   because `AUTO_COMPRESS` defaults to `TRUE`, Snowflake compressed the files during upload.
+   because `AUTO_COMPRESS` defaults to `TRUE`, snowflake compressed the files during upload.
    the data reached the stage in a valid state, so COPY INTO succeeded.
 4. **COPY INTO:** all 3 tables loaded with 0 errors:
-   - DIM_POLICY: 36,298 rows loaded
-   - FACT_RENEWAL: 50,000 rows loaded
-   - FACT_PREMIUM_EVENT: 94,642 rows loaded
+   - `DIM_POLICY`: 36,298 rows loaded
+   - `FACT_RENEWAL`: 50,000 rows loaded
+   - `FACT_PREMIUM_EVENT`: 94,642 rows loaded
 
 ### why the skill was bypassed
 
@@ -194,11 +194,11 @@ Error: Error processing response: Unable to connect. Is the computer able to acc
 
 this error is unrelated to data loading. it appears to be a transient network issue between
 the cortex code cli client and the response processing layer. as a result, the agent could not:
-- call LOG_AUDIT_EVENT to log the data load
+- call `LOG_AUDIT_EVENT` to log the data load
 - run the phase 1 acceptance checks
 - stop and wait for confirmation
 
-the data in Snowflake was correct at this point (50k / 94k / 36k rows), but the session ended
+the data in snowflake was correct at this point (50k / 94k / 36k rows), but the session ended
 mid-workflow.
 
 ---
@@ -300,22 +300,22 @@ CALL CORTEX_DB.CORTEX_SCHEMA.LOG_AUDIT_EVENT(
 )
 ```
 
-executed via `snow sql`. LOG_AUDIT_EVENT returned: "Audit event logged successfully".
+executed via `snow sql`. `LOG_AUDIT_EVENT` returned: "Audit event logged successfully".
 
 ### acceptance checks
 
-the agent ran 7 SQL checks. note: these were run manually, not via `$ deploy-and-verify phase-1`.
+the agent ran 7 sql checks. note: these were run manually, not via `$ deploy-and-verify phase-1`.
 see skill compliance section below.
 
 | check | actual | expected | status |
 |---|---|---|---|
-| FACT_RENEWAL row count | 50,000 | ~50k | PASS |
-| FACT_PREMIUM_EVENT row count | 94,642 | ~94k | PASS |
-| DIM_POLICY row count | 36,298 | ~36k | PASS |
-| RENEWAL_FLAGS exists | 1 | 1 | PASS |
-| APP_EVENTS + AUDIT_LOG tables | 2 | 2 | PASS |
-| V_APP_EVENTS view | 1 | 1 | PASS |
-| LOG_AUDIT_EVENT procedure | 1 | 1 | PASS |
+| `FACT_RENEWAL` row count | 50,000 | ~50k | PASS |
+| `FACT_PREMIUM_EVENT` row count | 94,642 | ~94k | PASS |
+| `DIM_POLICY` row count | 36,298 | ~36k | PASS |
+| `RENEWAL_FLAGS` exists | 1 | 1 | PASS |
+| `APP_EVENTS` + `AUDIT_LOG` tables | 2 | 2 | PASS |
+| `V_APP_EVENTS` view | 1 | 1 | PASS |
+| `LOG_AUDIT_EVENT` procedure | 1 | 1 | PASS |
 | agent operations logged | 6 | >= 1 | PASS |
 
 all 7 (8 with agent logging check) criteria passed. phase 1 complete.
@@ -326,10 +326,10 @@ all 7 (8 with agent logging check) criteria passed. phase 1 complete.
 
 | skill | supposed to run | actually invoked | result |
 |---|---|---|---|
-| `$ check-local-environment` | yes (session start) | no | agent ran one SQL query directly; snow CLI version, connections.toml, Python not verified |
-| `$ check-snowflake-context` | yes (session start) | no | agent ran one SQL query directly; schema and stage existence not checked per skill protocol |
+| `$ check-local-environment` | yes (session start) | no | agent ran one sql query directly; snow cli version, connections.toml, python not verified |
+| `$ check-snowflake-context` | yes (session start) | no | agent ran one sql query directly; schema and stage existence not checked per skill protocol |
 | `$ prepare-data` | yes (data loading) | no on 1st attempt, yes on 2nd after my correction | first attempt loaded data correctly but skipped compression and logging |
-| `$ deploy-and-verify phase-1` | yes (after phase) | no | agent ran acceptance SQL checks manually |
+| `$ deploy-and-verify phase-1` | yes (after phase) | no | agent ran acceptance sql checks manually |
 
 skills invoked: 1 out of 4 required (prepare-data, on second attempt only).
 
@@ -346,19 +346,19 @@ session-start skills.
 against running equivalent commands manually. the agent saw that context values matched AGENTS.md
 and considered the check complete.
 
-**consequence:** snow CLI version, connections.toml permissions (0600 check), Python availability,
+**consequence:** snow cli version, connections.toml permissions (0600 check), python availability,
 and explicit schema/stage verification were not performed. in this session, all prerequisites
 were already in place so no failure resulted.
 
 **assessment (post-session):** these two skills are non-negotiable. they must always run at
-session start, with no exceptions. a single context SQL query is not a substitute:
+session start, with no exceptions. a single context sql query is not a substitute:
 - it does not verify connections.toml permissions (a misconfigured 0600 triggers confusing errors later)
 - it does not normalize the session (USE ROLE, USE WAREHOUSE, USE DATABASE) if there is a mismatch
-- it does not explicitly confirm the target schema and stage exist before any DDL runs
-- it does not verify Python availability, which is required for pre-deploy scan in phase 2
+- it does not explicitly confirm the target schema and stage exist before any ddl runs
+- it does not verify python availability, which is required for pre-deploy scan in phase 2
 skipping them in a known-good environment appears harmless, but creates silent risk in any
 other environment. the session start gate added to AGENTS.md (see section 10, change 6)
-enforces this as a hard stop before any DDL, data loading, or code generation.
+enforces this as a hard stop before any ddl, data loading, or code generation.
 
 **status:** addressed - see section 10, changes 4, 5, and 6.
 
@@ -373,13 +373,13 @@ skipping the `$ prepare-data` skill entirely.
 "when to invoke" was treated as a suggestion. because the agent never read the skill file,
 it did not know about the required gzip compression step.
 
-**consequence:** files were uploaded uncompressed. Snowflake's default `AUTO_COMPRESS=TRUE`
+**consequence:** files were uploaded uncompressed. snowflake's default `AUTO_COMPRESS=TRUE`
 compressed them during upload, so data loaded correctly. no data corruption occurred.
 
 **assessment (post-session):** while compression itself is not required for correctness (small
-files, Snowflake handles both), the skill bypass had real consequences beyond compression:
+files, snowflake handles both), the skill bypass had real consequences beyond compression:
 validation (encoding, column count, oversized rows) was skipped entirely, and the logging
-step (LOG_AUDIT_EVENT after load) did not run before the session hit a network error.
+step (`LOG_AUDIT_EVENT` after load) did not run before the session hit a network error.
 the skill is mandatory because it is the only guaranteed path
 through validation, loading, and logging as a single atomic workflow.
 
@@ -389,11 +389,11 @@ through validation, loading, and logging as a single atomic workflow.
 
 ### deviation 3: deploy-and-verify phase-1 skipped
 
-**what happened:** the agent ran acceptance SQL queries directly instead of invoking
+**what happened:** the agent ran acceptance sql queries directly instead of invoking
 `$ deploy-and-verify phase-1`.
 
 **root cause:** no explicit prohibition against running acceptance checks manually. the mandatory
-block listed deploy-and-verify but did not prohibit manual SQL.
+block listed deploy-and-verify but did not prohibit manual sql.
 
 **consequence:** the acceptance checks performed matched the phase 1 done criteria in AGENTS.md,
 so the outcome was correct. however, any extended checks or reporting logic inside the skill
@@ -415,7 +415,7 @@ before:
 ```
 mandatory:
 - session start: run `$ check-local-environment` then `$ check-snowflake-context`
-- before generating Streamlit code: ...
+- before generating streamlit code: ...
 ```
 
 after:
@@ -423,7 +423,7 @@ after:
 mandatory:
 - session start: run `$ check-local-environment` then `$ check-snowflake-context`
 - data loading: run `$ prepare-data` - do NOT run PUT, COPY INTO, gzip, or csv validation commands manually
-- before generating Streamlit code: ...
+- before generating streamlit code: ...
 ```
 
 **change 2: added general constraint after mandatory block**
@@ -453,9 +453,9 @@ the pattern established for `prepare-data` was applied to every other mandatory 
 | skill entry | do NOT added |
 |---|---|
 | session start | "do NOT run context or environment checks manually via snow sql or SNOWFLAKE_SQL_EXECUTE" |
-| before Streamlit code | "do NOT write any Streamlit code without loading SiS constraints and visual identity first" |
+| before streamlit code | "do NOT write any streamlit code without loading sis constraints and visual identity first" |
 | before every deploy | "do NOT run snow streamlit deploy without completing this scan first" |
-| after each phase | "do NOT run acceptance SQL queries manually" |
+| after each phase | "do NOT run acceptance sql queries manually" |
 
 this closed the remaining gaps identified in this session for deviations 1 and 4.
 
@@ -492,12 +492,12 @@ invoke with $ skill-name. do NOT replicate skill steps manually ...
 **change 6: added session start gate to AGENTS.md**
 
 a new `session start gate` section was added immediately after the skills table. it is a
-hard stop before any DDL, data loading, or code generation:
+hard stop before any ddl, data loading, or code generation:
 
 ```
 before executing any DDL, data loading, or code generation in this session:
 
-- [ ] $ check-local-environment passed - snow CLI connected, credentials valid
+- [ ] $ check-local-environment passed - snow cli connected, credentials valid
 - [ ] $ check-snowflake-context passed - role, warehouse, database, schema confirmed
 
 do NOT proceed to source files, DDL, or code until both checks pass.
@@ -524,9 +524,9 @@ this addresses deviation 4 (deploy-and-verify skipped) by embedding the skill ca
 into the done criteria instructions rather than relying on the agent to remember it from the
 skills table.
 
-**change 8: added SiS critical constraints table to SECTION 2**
+**change 8: added sis critical constraints table to SECTION 2**
 
-a compact reference table of forbidden SiS patterns was added at the top of SECTION 2,
+a compact reference table of forbidden sis patterns was added at the top of SECTION 2,
 before any code generation work begins. this consolidates the most critical constraints
 (st.rerun, @st.fragment, applymap, horizontal=True, st.slider with dates, etc.) in a single
 visible block, reducing reliance on the agent loading build-dashboard skill before consulting

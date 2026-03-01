@@ -4,10 +4,10 @@
 **sessions:** cortex code cli, prompt 3 (dashboard build) - 2 agent sessions
 **environment:** CORTEX_DB.CORTEX_SCHEMA, role CORTEX_ADMIN, warehouse CORTEX_WH
 **model:** claude-sonnet-4-5 (both sessions)
-**final outcome:** phase 2 complete - dashboard rewritten, SQL injection fixed, deployed successfully; awaiting render confirmation
+**final outcome:** phase 2 complete - dashboard rewritten, sql injection fixed, deployed successfully; awaiting render confirmation
 
 **context:** this run follows phase_02_run_02.md. a planning session reviewed the 694-line
-dashboard.py produced in run 02, identified spec violations and a SQL injection risk, applied
+dashboard.py produced in run 02, identified spec violations and a sql injection risk, applied
 mandatory corrections to skill files and AGENTS.md, then re-executed with two agent sessions.
 
 ---
@@ -19,7 +19,7 @@ it is a single prompt (prompt 3) with a checkpoint before phase 3 begins.
 
 - **prompt 3 (dashboard build and deploy):**
   - enter `/plan` before pasting the prompt (required per prompts.md)
-  - load SiS patterns via `$ sis-streamlit` before planning
+  - load sis patterns via `$ sis-streamlit` before planning
   - scaffold structure via `$ sis-streamlit` -> `build-dashboard` (no args)
   - load visual identity via `$ sis-streamlit` -> `brand-identity`
   - generate `dashboard.py` with 3 pages per AGENTS.md specification
@@ -30,7 +30,7 @@ it is a single prompt (prompt 3) with a checkpoint before phase 3 begins.
 this run consisted of a planning phase followed by two agent sessions:
 - **planning phase** (pre-session): agent analyzed run 02 output, proposed build plan, mandatory corrections were added, skill files updated
 - **session 1**: complete rewrite of dashboard.py, deployment attempted - issues discovered
-- **session 2**: prior issues fixed, SQL injection remediated, successful re-deployment
+- **session 2**: prior issues fixed, sql injection remediated, successful re-deployment
 
 ---
 
@@ -50,9 +50,9 @@ that all 3 pages render correctly.
 during the planning phase the agent proposed a build plan with two problems that were
 corrected via review notes before execution began:
 
-1. **SQL injection marked as optional:** the plan rated SQL injection risk as "MEDIUM" with
+1. **sql injection marked as optional:** the plan rated sql injection risk as "MEDIUM" with
    a note that the fix was optional. this was incorrect. AGENTS.md section 2 states
-   "parameterized SQL only" and section 3 provides the exact whitelist pattern. the fix
+   "parameterized sql only" and section 3 provides the exact whitelist pattern. the fix
    was made mandatory before the session ran.
 
 2. **direct commands instead of skills for scan and deploy:** the plan listed
@@ -71,9 +71,9 @@ planning phase skill changes (section 8) were applied.
 
 | skill | scope | when | constraint |
 |---|---|---|---|
-| `$ check-local-environment` | project | session start | do NOT proceed without verifying snow CLI, connections.toml, Python |
+| `$ check-local-environment` | project | session start | do NOT proceed without verifying snow cli, connections.toml, python |
 | `$ check-snowflake-context` | project | session start | do NOT proceed without verifying role, warehouse, database, schema |
-| `$ sis-streamlit` | project | before any Streamlit planning or code | do NOT write Streamlit code without loading SiS patterns first |
+| `$ sis-streamlit` | project | before any streamlit planning or code | do NOT write streamlit code without loading sis patterns first |
 | `$ sis-streamlit` -> `build-dashboard` (no args) | project | before writing code | do NOT write dashboard.py without scaffold output |
 | `$ sis-streamlit` -> `brand-identity` | project | before writing code | do NOT use colors or fonts without loading brand identity |
 | `$ sis-streamlit` -> `build-dashboard` (with file) | project | before every deploy | do NOT deploy without pre-deploy scan passing |
@@ -108,9 +108,9 @@ over from run 02 after a prior session had partially modified it). it found 3 is
 |---|---|---|
 | chart 3 normalization: absolute counts instead of percentage share | CRITICAL | CRITICAL |
 | chart 3 color: CANCELLED mapped to orange instead of red `#E53935` | MEDIUM | MEDIUM |
-| SQL injection: f-string interpolation in IN-clause filters | MEDIUM | mandatory |
+| sql injection: f-string interpolation in IN-clause filters | MEDIUM | mandatory |
 
-review notes were added correcting the SQL injection severity and requiring skills
+review notes were added correcting the sql injection severity and requiring skills
 for scan and deploy. skill files were updated (see section 8) and the run proceeded.
 
 ### session 1: skills loaded, dashboard rewritten, deployment bypassed skills
@@ -131,16 +131,16 @@ for scan and deploy. skill files were updated (see section 8) and the run procee
    - `grep -n "st."` to verify set_page_config position
    - `grep` for DISTINCT/IS NOT NULL, legend patterns
 6. deployed with `snow streamlit deploy --replace` directly
-7. reported app URL and waited for confirmation
+7. reported app url and waited for confirmation
 
 **issues discovered after deployment:**
 
-- observed: no environment.yml visible in SiS project
+- observed: no environment.yml visible in sis project
 - app showed a react error loop: `Maximum update depth exceeded`
 - agent investigated: deployment bundle only contained dashboard.py; environment.yml not uploaded
-- conclusion: SiS warehouse runtime has pre-installed packages; environment.yml is unused
+- conclusion: sis warehouse runtime has pre-installed packages; environment.yml is unused
 
-### session 2: issues fixed, SQL injection remediated, deployment successful
+### session 2: issues fixed, sql injection remediated, deployment successful
 
 a new cortex session was started after stopping the first one.
 
@@ -154,22 +154,22 @@ a new cortex session was started after stopping the first one.
 2. read AGENTS.md, snowflake.yml, dashboard.py
 3. identified 3 pre-existing issues in the session-1 dashboard.py:
    - navigation radio placed AFTER "Filters" header (spec requires it FIRST)
-   - stacked bar chart used Python-calculated `pct` column instead of Altair `stack="normalize"`
+   - stacked bar chart used python-calculated `pct` column instead of altair `stack="normalize"`
    - environment.yml present (AGENTS.md: do NOT create)
 4. proposed implementation plan in plan mode - correctly listed skill usage for scan and deploy
 5. fixed navigation placement: moved `st.sidebar.radio("Navigation", ...)` before filters header
-6. fixed stacked bar chart: replaced Python normalization with `stack="normalize"` in Altair encoding
+6. fixed stacked bar chart: replaced python normalization with `stack="normalize"` in altair encoding
 7. deleted environment.yml
 8. ran pre-deploy scan using direct bash commands (see deviation 1):
    - `python3 -m py_compile dashboard.py` - exit code 0
    - grep checks for forbidden patterns - all clean
    - `grep -n "session.sql(f"` - found 6 matches
-9. inspected all 6 `session.sql(f` usages and found SQL injection in:
+9. inspected all 6 `session.sql(f` usages and found sql injection in:
    - flag submission (lines 357-366): flag_region, flag_segment, flag_channel interpolated directly
    - heatmap query (lines 294-340): IN-clause with `.join()` of user filter values
 10. fixed flag submission: added whitelist validation (`flag_region_safe`, `flag_segment_safe`, `flag_channel_safe`)
-11. fixed heatmap query: rewrote using Snowpark DataFrame API (`.filter(col().isin(safe_list))`)
-12. re-ran syntax check and SQL scan - clean
+11. fixed heatmap query: rewrote using snowpark DataFrame api (`.filter(col().isin(safe_list))`)
+12. re-ran syntax check and sql scan - clean
 13. verified snowflake.yml and current role (CORTEX_ADMIN)
 14. deployed with `snow streamlit deploy --replace`
 
@@ -184,7 +184,7 @@ warehouse: CORTEX_WH
 owner role: CORTEX_ADMIN
 ```
 
-agent reported the URL and stopped, waiting for confirmation that all 3 pages render correctly.
+agent reported the url and stopped, waiting for confirmation that all 3 pages render correctly.
 
 ---
 
@@ -219,12 +219,12 @@ but the agent interprets "go through the skill" as "read the skill file and foll
 which is what it did. the agent sees no mechanical difference between the two paths.
 
 **consequence in session 1:** the scan followed the build-dashboard checklist but the
-SQL injection check (added to build-dashboard in the planning phase) was not applied - the
+sql injection check (added to build-dashboard in the planning phase) was not applied - the
 agent ran generic grep patterns, not the specific f-string IN-clause check from the skill.
-SQL injection was not caught in session 1.
+sql injection was not caught in session 1.
 
 **consequence in session 2:** the scan DID apply the f-string IN-clause check (grep for
-`session.sql(f`) and found and fixed SQL injection before deploying. the governance intent
+`session.sql(f`) and found and fixed sql injection before deploying. the governance intent
 was upheld even though the mechanism was direct commands.
 
 **status:** skill mechanism bypass is a known open pattern. the governance outcome in
@@ -234,22 +234,22 @@ direct commands) remains unresolved.
 ### deviation 2: environment.yml created in session 1
 
 **what happened:** session 1 wrote an environment.yml file. AGENTS.md states "do NOT create.
-SiS warehouse runtime has pre-installed packages."
+sis warehouse runtime has pre-installed packages."
 
 **root cause:** the agent either did not read the relevant AGENTS.md section before writing
 environment.yml or the note was not sufficiently prominent during the code generation step.
 
 **consequence:** environment.yml was uploaded with deployment but unused. caused confusion
-when the file was not visible in the SiS project UI. the react error loop
+when the file was not visible in the sis project ui. the react error loop
 (`Maximum update depth exceeded`) observed after session 1 deployment was unrelated.
 
 **fix (within this run):** environment.yml was deleted in session 2 based on the AGENTS.md
-constraint "do NOT create. SiS warehouse runtime has pre-installed packages."
+constraint "do NOT create. sis warehouse runtime has pre-installed packages."
 
 **correction (post-run):** the constraint was wrong. environment.yml IS uploaded on first
-deploy and stays in the Snowflake stage; subsequent differential deploys skip it only when
+deploy and stays in the snowflake stage; subsequent differential deploys skip it only when
 unchanged (which caused the agent in run 02 to conclude it was not uploaded). deleting it
-broke the Streamlit version pin. all files were restored after this run and AGENTS.md was
+broke the streamlit version pin. all files were restored after this run and AGENTS.md was
 corrected - see post-run changes in section 8.
 
 **status:** incorrectly fixed within this run; reverted after this run.
@@ -258,7 +258,7 @@ corrected - see post-run changes in section 8.
 
 **what happened:** session 1 rewrote dashboard.py but introduced (or carried over) two
 spec violations: navigation radio placed after filters header, and stacked bar chart
-using Python normalization instead of Altair `stack="normalize"`.
+using python normalization instead of altair `stack="normalize"`.
 
 **root cause:** session 1 loaded brand-identity and build-dashboard skills before writing
 but did not have the final corrected spec for chart 3 normalization (the planning phase
@@ -278,8 +278,8 @@ reintroduced it). navigation placement was likely missed during the rewrite.
 | skill bypassed | `$ sis-streamlit` -> `build-dashboard` (scan) and `deploy-and-verify` (deploy) | same - scan and deploy still ran as direct commands |
 | what agent did instead | loaded skills at start; ran scan and deploy as direct commands | read skill files at execution time; ran steps as direct bash commands |
 | why it bypassed | skill files are markdown; agent cannot distinguish invocation from manual execution | same root cause; prohibition in AGENTS.md did not change agent behavior |
-| consequence | SQL injection not caught; environment.yml created; files in wrong dir | session 1: SQL injection not caught; environment.yml created again; session 2: SQL injection caught and fixed |
-| outcome | deployment successful; issues identified in planning phase before run 03 | deployment successful; SQL fixes applied correctly in session 2 |
+| consequence | sql injection not caught; environment.yml created; files in wrong dir | session 1: sql injection not caught; environment.yml created again; session 2: sql injection caught and fixed |
+| outcome | deployment successful; issues identified in planning phase before run 03 | deployment successful; sql fixes applied correctly in session 2 |
 | fix | planning phase updated skill files and AGENTS.md | open - mechanical enforcement not yet solved |
 
 ---
@@ -290,11 +290,11 @@ reintroduced it). navigation placement was likely missed during the rewrite.
 
 **`demos/renewal_radar_sis_dashboard/skills/sis-streamlit/skills/build-dashboard/SKILL.md`**
 
-scan mode step 3 updated: added mandatory SQL parameterization check:
+scan mode step 3 updated: added mandatory sql parameterization check:
 - grep for `session.sql(f` and inspect each match for IN-clause filter variable interpolation
-- violation: any f-string SQL where a user filter value is interpolated (e.g. `IN ({var})`)
+- violation: any f-string sql where a user filter value is interpolated (e.g. `IN ({var})`)
 - required fix: `session.table(...).filter(col(...).isin(whitelist_list))`
-- exception: constants `DATABASE`, `SCHEMA`, `APP_NAME` in f-string SQL are allowed
+- exception: constants `DATABASE`, `SCHEMA`, `APP_NAME` in f-string sql are allowed
 
 **`demos/renewal_radar_sis_dashboard/AGENTS.md`**
 
@@ -306,15 +306,15 @@ added "mandatory skill usage for scan and deploy" block to section 2:
 ### changes made to dashboard.py during sessions
 
 **session 1:** complete rewrite (474 lines)
-- all 3 pages implemented from spec: KPI Overview, Premium Pressure, Activity Log
+- all 3 pages implemented from spec: kpi overview, premium pressure, activity log
 - `@st.cache_data` and `get_active_session()` patterns applied correctly
-- altair charts with correct SiS 1.52.* compatible encoding
+- altair charts with correct sis 1.52.* compatible encoding
 
 **session 2:** targeted fixes applied to session 1 output
 - navigation placement: `st.sidebar.radio("Navigation", ...)` moved to before "Filters" header
-- stacked bar chart: Python `pct` column calculation removed; Altair `stack="normalize"` used instead
-- flag submission SQL injection: whitelist validation added for `flag_region`, `flag_segment`, `flag_channel`
-- heatmap SQL injection: `session.sql(f"... IN ({','.join(...)}) ")` replaced with Snowpark DataFrame `.filter(col().isin(safe_list))`
+- stacked bar chart: python `pct` column calculation removed; altair `stack="normalize"` used instead
+- flag submission sql injection: whitelist validation added for `flag_region`, `flag_segment`, `flag_channel`
+- heatmap sql injection: `session.sql(f"... IN ({','.join(...)}) ")` replaced with snowpark DataFrame `.filter(col().isin(safe_list))`
 
 ### environment.yml
 
@@ -330,11 +330,11 @@ the following changes were applied to skill files and AGENTS.md:
 **`AGENTS.md` + `build-dashboard/SKILL.md` - chart 3: gaps in proportional stacked bar**
 
 gaps visible before some segment bars (HOME, PERSONAL_AUTO) were caused by floating-point
-precision errors in the Python normalization step. when `df["pct"]` values do not sum to
-exactly 1.0 per group, Altair leaves a gap at the right edge.
+precision errors in the python normalization step. when `df["pct"]` values do not sum to
+exactly 1.0 per group, altair leaves a gap at the right edge.
 
-fix: removed Python normalization from the spec entirely. changed to `stack="normalize"`
-in the Altair X encoding with raw count `n:Q`. Altair guarantees exact 100% fill internally.
+fix: removed python normalization from the spec entirely. changed to `stack="normalize"`
+in the altair X encoding with raw count `n:Q`. altair guarantees exact 100% fill internally.
 also changed `alt.Y` sort from `sort="-x"` (ambiguous for 100% bars) to
 `sort=alt.EncodingSortField("n", op="sum", order="descending")`.
 
@@ -355,9 +355,9 @@ activate range picker mode. a single date value renders a single-date picker ins
 last (rightmost), making the chart appear to start from 100%. fix: added
 `alt.Order("renewal_outcome:N", sort="descending")` to put RENEWED first (leftmost, 0% edge).
 also added explicit tooltip spec: `alt.Tooltip("pct:Q", format=".1%", title="share")` with a
-Python-computed `pct` column for display only (not used in X encoding).
+python-computed `pct` column for display only (not used in X encoding).
 
-**`AGENTS.md` + `sis-patterns/SKILL.md` - heatmap: uppercase column names from Snowflake**
+**`AGENTS.md` + `sis-patterns/SKILL.md` - heatmap: uppercase column names from snowflake**
 
 `session.sql(...).to_pandas()` returns UPPERCASE column names (`PRICE_SHOCK_BAND`, not
 `price_shock_band`). dashboard code used lowercase names, causing `KeyError`. fix: added
@@ -372,7 +372,7 @@ state `st.text_input` above the table, filters rows client-side; do NOT add a co
 
 **`AGENTS.md` + `build-dashboard/SKILL.md` - sidebar date filter: two separate widgets**
 
-replaced single `st.date_input` range picker (awkward in SiS sidebar) with two separate
+replaced single `st.date_input` range picker (awkward in sis sidebar) with two separate
 `st.date_input` widgets: "Renewal date from" and "Renewal date to". added `format="YYYY-MM-DD"`
 to both to fix `2025/08/12` display format bug.
 
@@ -381,8 +381,8 @@ files also changed: `brand-identity/SKILL.md` (filter label conventions).
 **environment.yml: reverted incorrect removal + post-deploy verification added**
 
 the AGENTS.md constraint "do NOT create environment.yml" was wrong. environment.yml IS
-required at project root for Streamlit version pinning. it is uploaded on first deploy and
-stays in the Snowflake stage; differential deploys skip it only when unchanged.
+required at project root for streamlit version pinning. it is uploaded on first deploy and
+stays in the snowflake stage; differential deploys skip it only when unchanged.
 
 restored environment.yml to scaffold mode steps and success criteria in
 `build-dashboard/SKILL.md`. added `user_packages` check to `deploy-and-verify/SKILL.md`:
@@ -397,9 +397,9 @@ files changed: `build-dashboard/SKILL.md`, `AGENTS.md`, `deploy-and-verify/SKILL
 ## 9. executive summary
 
 - **deployment status:** successful. app accessible at `CORTEX_DB.CORTEX_SCHEMA.RENEWAL_RADAR`; awaiting render confirmation for all 3 pages.
-- **sql injection:** found and fixed in session 2. flag submission and heatmap query both remediated with whitelist validation and Snowpark DataFrame API before deployment.
+- **sql injection:** found and fixed in session 2. flag submission and heatmap query both remediated with whitelist validation and snowpark DataFrame api before deployment.
 - **spec violations in-run:** chart 3 normalization, navigation placement fixed before final deployment. environment.yml deleted based on incorrect AGENTS.md constraint.
 - **environment.yml:** deleted in session 2 (per AGENTS.md "do NOT create"). this was wrong - environment.yml is required for version pinning. AGENTS.md constraint was itself incorrect. all changes reverted after this run.
 - **post-run spec corrections:** 7 issues observed in deployed dashboard triggered updates to AGENTS.md, build-dashboard/SKILL.md, deploy-and-verify/SKILL.md, sis-patterns/SKILL.md, and references (chart stacking order, date filter widgets, heatmap column names, review flags, environment.yml restore).
-- **skill bypass pattern:** both sessions read the required skills but executed scan and deploy steps as direct bash commands. governance content was followed (SQL injection correctly caught in session 2), but the dispatch mechanism was not used. same open pattern as run 02.
-- **session split:** two agent sessions were required. session 1 produced a working build but missed SQL injection and created environment.yml. session 2 applied corrective fixes and re-deployed cleanly.
+- **skill bypass pattern:** both sessions read the required skills but executed scan and deploy steps as direct bash commands. governance content was followed (sql injection correctly caught in session 2), but the dispatch mechanism was not used. same open pattern as run 02.
+- **session split:** two agent sessions were required. session 1 produced a working build but missed sql injection and created environment.yml. session 2 applied corrective fixes and re-deployed cleanly.

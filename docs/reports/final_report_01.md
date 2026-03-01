@@ -11,14 +11,14 @@
 ## 1. executive summary
 
 the renewal radar sis dashboard was built and deployed across 3 phases using cortex code cli
-with an AGENTS.md-driven skill orchestration framework. the project tested whether an AI agent
+with an AGENTS.md-driven skill orchestration framework. the project tested whether an ai agent
 can follow a structured spec (AGENTS.md), invoke skills in the correct order, and produce a
 production-quality streamlit in snowflake dashboard.
 
 **key outcomes:**
 - dashboard is functional: 3 pages render with data, flag submission and review work, display labels applied
 - all numerical acceptance checks pass (8 phase 1 + 3 phase 2 + 5 phase 3 = 16 total)
-- 2 critical SQL injection vulnerabilities remain in the deployed code
+- 2 critical sql injection vulnerabilities remain in the deployed code
 - 1 required feature (FILTER_CHANGE logging) is missing from the current code
 - skill compliance was partial across all phases: session start gate consistently skipped, scans and deploys executed as direct commands instead of through skills
 - the agent-generated final report (ccc_report.md) contains false claims about security and completeness
@@ -31,18 +31,18 @@ production-quality streamlit in snowflake dashboard.
 
 **status:** complete, all 8/8 acceptance checks passed
 
-phase 1 established the Snowflake infrastructure and loaded source data. executed across 2 prompts
+phase 1 established the snowflake infrastructure and loaded source data. executed across 2 prompts
 in 2 separate sessions.
 
 | deliverable | result |
 |---|---|
-| logging objects (APP_EVENTS, AUDIT_LOG, V_APP_EVENTS, LOG_AUDIT_EVENT) | created, all functional |
-| domain table (RENEWAL_FLAGS) | created |
-| stage (STAGE_RAW_CSV) | created |
-| source tables (FACT_RENEWAL, FACT_PREMIUM_EVENT, DIM_POLICY) | created, loaded |
-| FACT_RENEWAL rows | 50,000 |
-| FACT_PREMIUM_EVENT rows | 94,642 |
-| DIM_POLICY rows | 36,298 |
+| logging objects (`APP_EVENTS`, `AUDIT_LOG`, `V_APP_EVENTS`, `LOG_AUDIT_EVENT`) | created, all functional |
+| domain table (`RENEWAL_FLAGS`) | created |
+| stage (`STAGE_RAW_CSV`) | created |
+| source tables (`FACT_RENEWAL`, `FACT_PREMIUM_EVENT`, `DIM_POLICY`) | created, loaded |
+| `FACT_RENEWAL` rows | 50,000 |
+| `FACT_PREMIUM_EVENT` rows | 94,642 |
+| `DIM_POLICY` rows | 36,298 |
 | audit log entry for data load | present (2 events) |
 
 **skill compliance:** all 4 mandatory skills invoked correctly in prompt 2. session start gate
@@ -51,7 +51,7 @@ PUT, COPY INTO, and row count verification.
 
 **deviations found:** 4 total, 2 addressed post-session (stopping point rule tightened,
 skill path resolution fixed via renaming sis-streamlit). 2 non-critical (step order variation,
-post-DDL verification queries).
+post-ddl verification queries).
 
 ---
 
@@ -65,13 +65,13 @@ display-label additions, and scope corrections (final: 707 lines).
 | deliverable | result |
 |---|---|
 | dashboard.py | 707 lines, 3 pages, deployed |
-| environment.yml | correct (Streamlit 1.52.*, pandas, altair) |
+| environment.yml | correct (streamlit 1.52.*, pandas, altair) |
 | snowflake.yml | correct format |
-| page 1: KPI overview | renewal rate, trends, outcomes by region |
+| page 1: kpi overview | renewal rate, trends, outcomes by region |
 | page 2: premium pressure | heatmap, premium change charts, band analysis |
 | page 3: flag management | flag submission, review, audit log |
 | display-label layer | 6 mapping dictionaries, all charts/filters/tables use human-readable labels |
-| deploy cycles | 5 total (1 runtime error fix, 1 bug fix, 1 display-label, 1 scope fix, 1 DB correction) |
+| deploy cycles | 5 total (1 runtime error fix, 1 bug fix, 1 display-label, 1 scope fix, 1 db correction) |
 
 **skill compliance:** partial. `$ sis-streamlit` loaded in both sessions. sub-skills (build-dashboard,
 brand-identity, sis-patterns) read correctly. however:
@@ -86,24 +86,24 @@ brand-identity, sis-patterns) read correctly. however:
 
 ### phase 3: write-back verification (phase_03_run_01.md)
 
-**status:** all 5 SQL checks pass numerically, but with caveats
+**status:** all 5 sql checks pass numerically, but with caveats
 
-phase 3 verified flag submission, flag review, and audit logging via 5 SQL threshold checks.
+phase 3 verified flag submission, flag review, and audit logging via 5 sql threshold checks.
 
 | check | expected | actual | status |
 |---|---|---|---|
-| FILTER_CHANGE events in AUDIT_LOG | >= 1 | 30 | PASS (misleading, see bugs section) |
-| open flags in RENEWAL_FLAGS | >= 1 | 5 | PASS |
-| FLAG_ADDED events in AUDIT_LOG | >= 1 | 6 | PASS |
+| FILTER_CHANGE events in `AUDIT_LOG` | >= 1 | 30 | PASS (misleading, see bugs section) |
+| open flags in `RENEWAL_FLAGS` | >= 1 | 5 | PASS |
+| FLAG_ADDED events in `AUDIT_LOG` | >= 1 | 6 | PASS |
 | reviewed flags with reviewed_by | >= 1 | 6 | PASS |
-| FLAG_REVIEWED events in AUDIT_LOG | >= 1 | 2 | PASS |
+| FLAG_REVIEWED events in `AUDIT_LOG` | >= 1 | 2 | PASS |
 
 **skill compliance:** `$ sis-dashboard` not invoked. all checks ran manually via SNOWFLAKE_SQL_EXECUTE.
 same bypass pattern as all prior runs.
 
 **ccc_report.md accuracy:** the agent-generated final report contains multiple errors:
 - criterion #13 reports wrong name and value (11 total flags instead of 5 open)
-- claims "parameterized SQL with whitelist validation" (false)
+- claims "parameterized sql with whitelist validation" (false)
 - claims "no issues found, no fixes required" (false)
 - does not identify any of the remaining issues documented in the code review
 
@@ -118,11 +118,11 @@ the project complete.
 
 | # | issue | severity | status |
 |---|---|---|---|
-| 1.1 | SQL injection in INSERT (flag_reason) | critical | open |
-| 1.2 | SQL injection in UPDATE (review_notes) | critical | open |
-| 1.3 | CURRENT_SIS_USER in f-string SQL | low | open |
-| 1.4 | whitelist-validated filters in f-string SQL | low | open |
-| 1.5 | date values in f-string SQL | minimal | open |
+| 1.1 | sql injection in INSERT (flag_reason) | critical | open |
+| 1.2 | sql injection in UPDATE (review_notes) | critical | open |
+| 1.3 | CURRENT_SIS_USER in f-string sql | low | open |
+| 1.4 | whitelist-validated filters in f-string sql | low | open |
+| 1.5 | date values in f-string sql | minimal | open |
 | 2 | missing FILTER_CHANGE audit logging | high | open |
 | 3 | missing flag_id in st.success | medium | open |
 | 4 | heatmap ignores segment/channel filters | medium | open |
@@ -135,12 +135,12 @@ the project complete.
 
 ### 3.1 critical issues (require immediate fix before any production use)
 
-#### BUG-001: SQL injection in INSERT via flag_reason
+#### BUG-001: sql injection in INSERT via flag_reason
 - **source:** code_review_dashboard.md issue 1.1
 - **location:** dashboard.py lines 557-565
 - **description:** `flag_reason` from `st.text_input()` is interpolated directly into an INSERT
-  f-string SQL statement. a user can type `'); DROP TABLE RENEWAL_FLAGS; --` to execute
-  arbitrary SQL.
+  f-string sql statement. a user can type `'); DROP TABLE RENEWAL_FLAGS; --` to execute
+  arbitrary sql.
 - **status:** OPEN, not fixed
 - **detected by:** manual code review (not caught by any agent scan)
 - **why it was missed:** the `session.sql(f` parameterization check in build-dashboard SKILL.md
@@ -157,7 +157,7 @@ the project complete.
   st.success(f"Flag submitted: {flag_id}")
   ```
   this also resolves BUG-004 (missing flag_id return).
-- **proposed fix (option B):** use Snowpark DataFrame API with `lit()` for all values:
+- **proposed fix (option B):** use snowpark DataFrame api with `lit()` for all values:
   ```python
   from snowflake.snowpark.functions import lit
   session.table(f"{DATABASE}.{SCHEMA}.RENEWAL_FLAGS").insert([
@@ -168,11 +168,11 @@ the project complete.
 - **AGENTS.md change needed:** expand security rule 3 to cover INSERT/UPDATE with user text input.
   current rule only covers IN-list filter validation.
 
-#### BUG-002: SQL injection in UPDATE via review_notes
+#### BUG-002: sql injection in UPDATE via review_notes
 - **source:** code_review_dashboard.md issue 1.2
 - **location:** dashboard.py lines 660-669
 - **description:** `review_notes` from `st.text_area()` is interpolated directly into an UPDATE
-  f-string SQL statement. same injection risk as BUG-001.
+  f-string sql statement. same injection risk as BUG-001.
 - **status:** OPEN, not fixed
 - **detected by:** manual code review
 - **why it was missed:** same root cause as BUG-001
@@ -184,7 +184,7 @@ the project complete.
       CURRENT_SIS_USER, review_notes, flag_ids_str
   )
   ```
-- **proposed fix (option B):** use parameterized SQL via Snowpark.
+- **proposed fix (option B):** use parameterized sql via snowpark.
 - **AGENTS.md change needed:** same as BUG-001.
 
 ---
@@ -196,10 +196,10 @@ the project complete.
 - **location:** dashboard.py (entire file, 0 occurrences of FILTER_CHANGE)
 - **description:** AGENTS.md requires `log_audit_event("FILTER_CHANGE", ...)` on every sidebar
   filter change on pages 1 and 2. the current dashboard.py contains zero FILTER_CHANGE logging
-  code. the 30 FILTER_CHANGE events in AUDIT_LOG exist from a prior dashboard version.
+  code. the 30 FILTER_CHANGE events in `AUDIT_LOG` exist from a prior dashboard version.
 - **status:** OPEN, not fixed
 - **detected by:** code review + phase 3 analysis
-- **consequence:** if AUDIT_LOG were cleared and the current dashboard tested from scratch, the
+- **consequence:** if `AUDIT_LOG` were cleared and the current dashboard tested from scratch, the
   phase 3 check #1 (FILTER_CHANGE >= 1) would FAIL. the numerical pass is based on stale data.
 - **proposed fix:** add `on_change` callbacks to all sidebar multiselect and date_input widgets:
   ```python
@@ -213,7 +213,7 @@ the project complete.
       on_change=on_filter_change
   )
   ```
-- **note:** `on_change` in SiS requires careful testing to avoid spurious logging on first render.
+- **note:** `on_change` in sis requires careful testing to avoid spurious logging on first render.
 - **AGENTS.md change needed:** add FILTER_CHANGE as a mandatory pattern check in build-dashboard
   scan mode: `grep -c "FILTER_CHANGE" <file>` must be >= 1.
 
@@ -226,7 +226,7 @@ the project complete.
 - **location:** dashboard.py line 570
 - **description:** AGENTS.md line 673 requires "show st.success() with the returned flag_id."
   the current code shows scope instead: `st.success(f"Flag submitted successfully: {scope}")`.
-  the INSERT does not return the generated UUID.
+  the INSERT does not return the generated uuid.
 - **status:** OPEN, not fixed
 - **detected by:** manual code review
 - **proposed fix:** resolved together with BUG-001 if using stored procedure approach (option A).
@@ -270,23 +270,23 @@ the project complete.
   ```
 - **brand-identity change needed:** add explicit outcome color mapping to skill file.
 
-#### BUG-007: CURRENT_SIS_USER in f-string SQL
+#### BUG-007: CURRENT_SIS_USER in f-string sql
 - **source:** code_review_dashboard.md issue 1.3
 - **location:** dashboard.py lines 560, 663, 667
 - **description:** `CURRENT_SIS_USER` (from `st.user.user_name`) is interpolated directly into
-  f-string SQL. this is a system value (not user-editable), so practical injection risk is low.
-  however, it violates parameterized SQL best practices.
+  f-string sql. this is a system value (not user-editable), so practical injection risk is low.
+  however, it violates parameterized sql best practices.
 - **status:** OPEN
 - **proposed fix:** resolved together with BUG-001/BUG-002 if using stored procedure approach.
 
-#### BUG-008: whitelist-validated filter values in f-string SQL
+#### BUG-008: whitelist-validated filter values in f-string sql
 - **source:** code_review_dashboard.md issue 1.4
 - **location:** dashboard.py lines 232-236, 418-422
 - **description:** filter values (regions, segments, channels) are whitelist-validated but still
-  interpolated via f-string `.join()` into SQL. AGENTS.md security rule 3 specifies Snowpark
-  DataFrame API (`session.table().filter(col().isin())`), not f-string SQL.
+  interpolated via f-string `.join()` into sql. AGENTS.md security rule 3 specifies snowpark
+  DataFrame api (`session.table().filter(col().isin())`), not f-string sql.
 - **status:** OPEN
-- **proposed fix:** rewrite to Snowpark DataFrame API, or document as accepted exception for
+- **proposed fix:** rewrite to snowpark DataFrame api, or document as accepted exception for
   aggregate queries with DATE_TRUNC.
 
 #### BUG-009: module-level session vs sis-patterns contradiction
@@ -310,11 +310,11 @@ these issues were detected and resolved during the phase 1-3 execution sessions.
 | skill bypass gap | 1 (run 01) | high | agent did not invoke `$ sis-dashboard` for acceptance checks | manual review of run 01 | prompt 2 updated to explicitly say "use $ sis-dashboard" |
 | stopping point ambiguity | 1 (run 02) | medium | agent asked phase selection despite clear prompt | session observation | sis-dashboard SKILL.md stopping points rewritten with explicit conditions |
 | skill path resolution | 1 (run 02) | medium | sub-skill path resolved from personal skills location instead of project | session observation | project skill renamed to sis-streamlit, routing paths corrected |
-| TypeError: pandas.Series in Snowpark filter | 2 (run 04) | high | `pd.Series().isin()` passed to Snowpark `.filter()` | runtime error after deploy | removed Snowpark filter, kept pandas filtering |
-| outcome chart single bar | 2 (run 04) | medium | chart showed only RENEWED bar, missing 3 other outcomes | user testing | added JOIN to FACT_RENEWAL for authoritative renewal_outcome |
-| raw field names in axis titles | 2 (run 04) | low | axis titles showed "renewal_outcome", "avg_change" etc. | user testing | added `title=` parameters to Altair encodings |
-| scope_parts.append bug | 2 (run 04) | medium | agent wrote `append(flag_region)` instead of `append("REGION")` during display-label refactoring | user testing | fixed all 3 occurrences, DB records corrected via UPDATE |
-| stale TX/TN values in RENEWAL_FLAGS.scope | 2 (run 04) | low | old flags had TX/TN instead of REGION in scope column | user testing | UPDATE statements to correct 3 rows |
+| TypeError: pandas.Series in snowpark filter | 2 (run 04) | high | `pd.Series().isin()` passed to snowpark `.filter()` | runtime error after deploy | removed snowpark filter, kept pandas filtering |
+| outcome chart single bar | 2 (run 04) | medium | chart showed only RENEWED bar, missing 3 other outcomes | user testing | added JOIN to `FACT_RENEWAL` for authoritative renewal_outcome |
+| raw field names in axis titles | 2 (run 04) | low | axis titles showed "renewal_outcome", "avg_change" etc. | user testing | added `title=` parameters to altair encodings |
+| scope_parts.append bug | 2 (run 04) | medium | agent wrote `append(flag_region)` instead of `append("REGION")` during display-label refactoring | user testing | fixed all 3 occurrences, db records corrected via UPDATE |
+| stale TX/TN values in `RENEWAL_FLAGS.scope` | 2 (run 04) | low | old flags had TX/TN instead of REGION in scope column | user testing | UPDATE statements to correct 3 rows |
 | compound skill syntax error | 2 (run 04) | low | agent tried `$ sis-streamlit -> deploy-and-verify` as literal command | runtime error | agent fell back to reading SKILL.md directly |
 
 ---
@@ -335,7 +335,7 @@ these issues were detected and resolved during the phase 1-3 execution sessions.
 ### 4.2 recurring patterns across all runs
 
 1. **session start gate consistently skipped in phase 2+:** the agent treated memory validation
-   or direct SQL context checks as equivalent to the mandatory skill invocation. the gate was
+   or direct sql context checks as equivalent to the mandatory skill invocation. the gate was
    only reliably followed in phase 1 after explicit prompt engineering.
 
 2. **scan and deploy as direct commands:** the agent reads skill SKILL.md files but executes
@@ -346,7 +346,7 @@ these issues were detected and resolved during the phase 1-3 execution sessions.
    names a skill (e.g. "use $ sis-dashboard"), the agent invokes it. when the prompt does not
    name the skill, the agent bypasses it even when AGENTS.md mandates it.
 
-4. **agent self-verification is insufficient:** the agent's own pre-deploy scans missed SQL
+4. **agent self-verification is insufficient:** the agent's own pre-deploy scans missed sql
    injection, and the final report (ccc_report.md) contained false claims. the agent does not
    reliably detect its own errors.
 
@@ -361,8 +361,8 @@ the agent-generated final report (ccc_report.md) has the following accuracy issu
 
 | claim in ccc_report.md | reality | severity |
 |---|---|---|
-| "Parameterized SQL with whitelist validation" | SQL injection exists in INSERT and UPDATE with user text input | critical misrepresentation |
-| "No issues found. No fixes required." | 5+ issues exist including 2 critical SQL injections | critical misrepresentation |
+| "Parameterized sql with whitelist validation" | sql injection exists in INSERT and UPDATE with user text input | critical misrepresentation |
+| "No issues found. No fixes required." | 5+ issues exist including 2 critical sql injections | critical misrepresentation |
 | criterion #13: "Flag exists in RENEWAL_FLAGS: 11 flags" | should be "Open flags: 5" per AGENTS.md | factual error |
 | FILTER_CHANGE: 30 events, PASS | events are stale from prior version; current code has 0 FILTER_CHANGE logging | misleading |
 | "Zero forbidden patterns" | session.sql(f check was never run | incomplete assessment |
@@ -374,25 +374,25 @@ numerical threshold checks only, not code quality or security posture.
 
 ## 6. next steps
 
-### 6.1 critical: fix SQL injection vulnerabilities (BUG-001, BUG-002)
+### 6.1 critical: fix sql injection vulnerabilities (BUG-001, BUG-002)
 
 **priority:** immediate, before any further use of the dashboard
 
-1. create `INSERT_RENEWAL_FLAG` stored procedure in Snowflake that accepts all flag fields as
-   parameters and returns the generated flag_id UUID
+1. create `INSERT_RENEWAL_FLAG` stored procedure in snowflake that accepts all flag fields as
+   parameters and returns the generated flag_id uuid
 2. create `UPDATE_RENEWAL_FLAG` stored procedure that accepts review_notes, flag_ids, and
    reviewer as parameters
 3. replace f-string INSERT (lines 557-565) with `session.call()` to the INSERT procedure
 4. replace f-string UPDATE (lines 660-669) with `session.call()` to the UPDATE procedure
 5. this also resolves BUG-004 (missing flag_id) and BUG-007 (CURRENT_SIS_USER in f-string)
-6. update AGENTS.md security rule 3 to cover DML with user text input
-7. add user-input-in-DML check to build-dashboard scan mode
+6. update AGENTS.md security rule 3 to cover dml with user text input
+7. add user-input-in-dml check to build-dashboard scan mode
 
 ### 6.2 high: implement FILTER_CHANGE logging (BUG-003)
 
 1. add `on_change` callbacks to all sidebar filter widgets (multiselect, date_input) on pages 1 and 2
 2. each callback calls `log_audit_event("FILTER_CHANGE", "USER_INTERACTION", page, "sidebar_filters", "multiselect_change")`
-3. test carefully in SiS to avoid spurious logging on initial render
+3. test carefully in sis to avoid spurious logging on initial render
 4. verify by clearing test events and confirming new FILTER_CHANGE events appear after filter interactions
 5. add `grep -c "FILTER_CHANGE"` check to build-dashboard scan mode
 
@@ -405,7 +405,7 @@ numerical threshold checks only, not code quality or security posture.
 ### 6.4 low: visual and style fixes (BUG-006, BUG-008, BUG-009)
 
 1. differentiate LAPSED/NOT_TAKEN_UP colors in outcome charts
-2. consider rewriting filter SQL to Snowpark DataFrame API (or document exception)
+2. consider rewriting filter sql to snowpark DataFrame api (or document exception)
 3. resolve sis-patterns vs build-dashboard scaffold contradiction for module-level session
 
 ### 6.5 test agents-md-semantic-model branch
@@ -439,7 +439,7 @@ potentially the semantic model layer. next steps:
 ### 6.7 suggested execution order
 
 ```
-1. [critical]  fix SQL injection (BUG-001, BUG-002) + flag_id return (BUG-004)
+1. [critical]  fix sql injection (BUG-001, BUG-002) + flag_id return (BUG-004)
 2. [critical]  redeploy and verify
 3. [high]      implement FILTER_CHANGE logging (BUG-003)
 4. [high]      redeploy and verify phase 3 check passes with fresh events
@@ -460,7 +460,7 @@ potentially the semantic model layer. next steps:
 
 | report | file | covers |
 |---|---|---|
-| phase 1 final | phase_01_run_02.md | infrastructure DDL, data load, 8 acceptance checks |
+| phase 1 final | phase_01_run_02.md | infrastructure ddl, data load, 8 acceptance checks |
 | phase 2 final | phase_02_run_04.md | dashboard build, 5 deploy cycles, display-label layer |
-| phase 3 final | phase_03_run_01.md | write-back verification, 5 SQL checks, ccc_report.md analysis |
+| phase 3 final | phase_03_run_01.md | write-back verification, 5 sql checks, ccc_report.md analysis |
 | code review | code_review_dashboard.md | 6 issues in final dashboard.py (707 lines) |
