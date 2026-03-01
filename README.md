@@ -1,14 +1,14 @@
 # renewal radar sis dashboard
 
-cortex code cli demo: autonomous end-to-end build — infra, data load, streamlit in snowflake app, audit loop. zero manual code.
+cortex code cli demo: autonomous end-to-end build. infra, data load, streamlit in snowflake app, audit loop. zero manual code.
 
 ## what this is
 
 cortex code cli takes `AGENTS.md` as input and autonomously:
-1. creates logging infrastructure (AUDIT_LOG, APP_EVENTS, V_APP_EVENTS, LOG_AUDIT_EVENT), domain table, and stage
+1. creates logging infrastructure (`AUDIT_LOG`, `APP_EVENTS`, `V_APP_EVENTS`, `LOG_AUDIT_EVENT`), domain table, and stage
 2. loads 3 csv files into source tables via internal stage
 3. builds and deploys a 3-page streamlit in snowflake dashboard
-4. logs user interactions and agent operations via LOG_AUDIT_EVENT procedure
+4. logs user interactions and agent operations via `LOG_AUDIT_EVENT` procedure
 
 ## repo contents
 
@@ -26,7 +26,7 @@ cortex code cli takes `AGENTS.md` as input and autonomously:
 ## dashboard pages
 
 1. **kpi overview** - renewal rate, leakage rate, quote-to-bind, service delay index + trend and regional breakdown charts
-2. **premium pressure** - price shock analysis, premium change by outcome, heatmap + flag-for-review write-back to RENEWAL_FLAGS
+2. **premium pressure** - price shock analysis, premium change by outcome, heatmap + flag-for-review write-back to `RENEWAL_FLAGS`
 3. **activity log** - user interaction audit trail, inline flag review with mark-reviewed write-back
 
 ## running a session

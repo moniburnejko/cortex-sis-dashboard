@@ -45,10 +45,20 @@ complete these steps before launching cortex code cli:
 - the agent should use idempotent DDL. watch that it does not DROP
   existing objects.
 - the agent must stay within the schema defined in AGENTS.md.
-- if the agent builds SQL with f-strings using user-supplied values,
-  stop it and ask for whitelist validation.
-- if the agent skips skills and runs commands manually, remind it to
-  use the skill.
+- if the agent writes INSERT or UPDATE using f-strings with values from
+  `st.text_input`, `st.text_area`, or any user widget: **stop it immediately.**
+  require `$ sis-dashboard -> secure-dml` before any DML code is written.
+  the fix requires a stored procedure, not whitelist validation.
+- if the agent builds SQL with f-strings using user-selected filter values
+  (regions, segments, channels in IN-clauses): stop and ask for whitelist
+  validation per security rule 3 in AGENTS.md.
+- if the agent skips `$ check-local-environment` or `$ check-snowflake-context`
+  at session start and proceeds directly to SQL or code: remind it to use the
+  skills. direct SQL checks or memory file checks are not equivalent.
+- if the agent runs pre-deploy scan as manual grep/bash commands instead of
+  `$ sis-dashboard -> build-dashboard dashboard.py`: remind it to use the skill.
+  the skill includes DML injection checks and audit event presence checks that
+  manual grep sequences miss.
 - ADD SEARCH OPTIMIZATION may return "already exists." this is expected.
 
 ### error reporting template
@@ -140,13 +150,16 @@ open the app url and interact with all 3 pages:
 - 4 kpi cards show values (not None or NaN)
 - 3 charts display data
 - sidebar filters work (region, segment, channel, date range)
-- change a filter, then check audit log for a FILTER_CHANGE row
+- change a filter, then go to page 3 tab 1: a FILTER_CHANGE row must appear
+  with your username and a timestamp within the last 5 minutes.
+  if no new row appears: FILTER_CHANGE logging is missing from the code.
 
 **page 2 (premium pressure analysis):**
 - 3 kpi cards at top
 - bar charts and heatmap display data
 - sidebar has region, segment, channel, date range + "Final Offers Only" toggle
 - "flag for review" section works: submit a flag, see st.success with a flag_id
+  (st.success MUST show a UUID like "Flag submitted: 3f9a1c42-...", NOT the scope string)
 
 **page 3 (activity log):**
 - tab 1: user interactions table with your username in USER_NAME (not NULL or a service account)
@@ -164,6 +177,10 @@ proceed to final verification.
 
 if an error appears, use the error reporting template from the session
 guidance section.
+
+**after checkpoint 3 passes:** commit dashboard.py to git.
+this enables git diff verification for any subsequent changes and allows
+the agent to verify what changed between deploys.
 
 ---
 
@@ -191,7 +208,42 @@ if anything fails, decide whether to fix and re-run or accept.
 
 ---
 
-## why 4 prompts
+## prompt 5: post-deployment code review (run after checkpoint 3)
+
+this is a security and completeness scan of the deployed dashboard.py.
+run it after checkpoint 3 passes and after committing to git.
+
+```
+use $ sis-dashboard -> build-dashboard dashboard.py to run a full
+post-deployment security scan of the file.
+report every issue found including:
+- any session.sql(f matches containing INSERT or UPDATE
+- FILTER_CHANGE, FLAG_ADDED, FLAG_REVIEWED presence (each must be >= 1)
+- session.call( count (must be >= 2)
+- any other forbidden patterns
+
+do not attempt fixes. wait for my decision.
+```
+
+### checkpoint 5
+
+the scan report should show:
+- DML injection: 0 `session.sql(f` matches with INSERT/UPDATE
+- `session.call(` count >= 2
+- FILTER_CHANGE, FLAG_ADDED, FLAG_REVIEWED: each >= 1
+- forbidden API patterns: all 0
+- style: 0 FAIL results (WARNs are acceptable)
+
+if any security issue is found: do not proceed until it is fixed and
+the scan is re-run clean.
+
+this prompt catches issues introduced during incremental editing after
+the initial deploy. the pre-deploy scan before deployment 1 does not
+cover changes made in subsequent edit cycles.
+
+---
+
+## why 5 prompts
 
 each prompt ends with a stop condition and waits for user confirmation:
 
@@ -204,6 +256,8 @@ each prompt ends with a stop condition and waits for user confirmation:
   verification queries check for user interaction records.
 - **prompt 4** runs the full acceptance sweep after the user has
   interacted with all features.
+- **prompt 5** runs a post-deployment security scan: checks for DML injection,
+  audit event presence, and forbidden patterns introduced during incremental editing.
 
 without stopping after each phase, a misunderstanding in phase 1
-compounds through phases 2-4, making it harder to debug.
+compounds through subsequent phases, making it harder to debug.
