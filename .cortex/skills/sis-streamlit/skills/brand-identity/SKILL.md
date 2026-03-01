@@ -1,9 +1,9 @@
 ---
 name: brand-identity
-description: "load the visual identity, chart type rules, style defaults, and language conventions for the renewal radar dashboard. trigger before generating any Streamlit code - after build-dashboard (no args). do NOT use for SiS API constraints (those are in build-dashboard) or for Snowflake environment checks."
+description: "load the visual identity, chart type rules, style defaults, and language conventions for the renewal radar dashboard. trigger before generating any streamlit code - after build-dashboard (no args). do NOT use for sis api constraints (those are in build-dashboard) or for snowflake environment checks."
 ---
 
--> Load `references/altair-docs.md` on every invocation - Altair mark types, encoding shorthands, axis formatting, legend placement, complete chart examples.
+-> Load `references/altair-docs.md` on every invocation - altair mark types, encoding shorthands, axis formatting, legend placement, complete chart examples.
 
 ## colors
 
@@ -11,18 +11,43 @@ load these values into context and use them consistently across all pages.
 
 ### primary palette
 
-| token | hex | usage |
-|---|---|---|
-| primary | #1565C0 | trend lines, primary bars, "RENEWED" state, heatmap high end |
-| accent | #FFA726 | "non-renewed" states (LAPSED, NOT_TAKEN_UP, CANCELLED), warnings |
+| token            | hex     | usage                                          |
+|------------------|---------|------------------------------------------------|
+| primary          | #1565C0 | trend lines, primary bars, "RENEWED" state, heatmap high end |
+| accent-lapsed    | #FFA726 | LAPSED state, warnings                         |
+| accent-ntu       | #FB8C00 | NOT_TAKEN_UP state (darker orange, visually distinct from LAPSED) |
+| accent-cancelled | #E53935 | CANCELLED state                                |
+
+> **LAPSED and NOT_TAKEN_UP must have distinct colors.** never assign the same hex to
+> two different outcome values. `#FFA726` is reserved for LAPSED only.
+
+---
+
+## outcome color mapping
+
+use this exact domain/range in every chart that encodes `renewal_outcome` as color.
+
+| outcome      | hex     | token            |
+|--------------|---------|------------------|
+| RENEWED      | #1565C0 | primary          |
+| LAPSED       | #FFA726 | accent-lapsed    |
+| NOT_TAKEN_UP | #FB8C00 | accent-ntu       |
+| CANCELLED    | #E53935 | accent-cancelled |
+
+```python
+alt.Scale(
+    domain=["RENEWED", "LAPSED", "NOT_TAKEN_UP", "CANCELLED"],
+    range=["#1565C0", "#FFA726", "#FB8C00", "#E53935"]
+)
+```
 
 ### status palette (for tabular data)
 
 | status | background | text | usage |
 |---|---|---|---|
-| SUCCESS / OK | #d4edda | inherit | AUDIT_LOG execution_status |
-| WARN | #fff3cd | inherit | AUDIT_LOG execution_status |
-| ERROR | #f8d7da | inherit | AUDIT_LOG execution_status |
+| SUCCESS / OK | #d4edda | inherit | `AUDIT_LOG` execution_status |
+| WARN | #fff3cd | inherit | `AUDIT_LOG` execution_status |
+| ERROR | #f8d7da | inherit | `AUDIT_LOG` execution_status |
 
 ### heatmap gradient (renewal_rate: low -> high)
 
@@ -39,10 +64,10 @@ load these values into context and use them consistently across all pages.
 ## chart type rules
 
 use these rules to select the correct chart type for each use case.
-**do NOT use `st.bar_chart` or `st.line_chart`** - use Altair for all charts.
-reasons: native Streamlit charts cannot format axis values as percentages and do not support horizontal layout.
+**do NOT use `st.bar_chart` or `st.line_chart`** - use altair for all charts.
+reasons: native streamlit charts cannot format axis values as percentages and do not support horizontal layout.
 
-| use case | chart type | Altair method |
+| use case | chart type | altair method |
 |---|---|---|
 | metric trend over time | line with points | `mark_line(color=..., point=True)` |
 | single metric by category - SHORT labels (<=8 categories, codes or bands) | vertical bar (column) | `mark_bar(color=...)` + `alt.X("cat:N", sort="-y")` + `alt.Y("metric:Q")` |
@@ -62,7 +87,7 @@ reasons: native Streamlit charts cannot format axis values as percentages and do
 
 ## chart style defaults
 
-apply these defaults to every Altair chart unless a specific exception is noted.
+apply these defaults to every altair chart unless a specific exception is noted.
 
 ### axes
 
@@ -71,17 +96,17 @@ apply these defaults to every Altair chart unless a specific exception is noted.
 - **categorical X axis with text labels**: always add `axis=alt.Axis(labelAngle=0)` - prevents diagonal labels
 - **time X axis**: always add `title=None` to suppress the axis title; use adaptive granularity: day (<=30 days), week (31-180 days), month (>180 days)
 - **axis titles - always explicit**: always set `title=` on both `alt.X()` and `alt.Y()`.
-  never rely on Altair defaults - they render raw field names (e.g. "renewal_outcome", "avg_change", "renewal_rate").
+  never rely on altair defaults - they render raw field names (e.g. "renewal_outcome", "avg_change", "renewal_rate").
   titles must be sentence case with spaces: "Renewal rate", "Renewal outcome", "Average premium change".
   exception: time-series X axis uses `title=None` to suppress the axis title (see above).
-- **time X axis - aggregation is mandatory**: aggregate dates in SQL using `DATE_TRUNC` before charting. do NOT plot raw `renewal_date` values and rely on Altair formatting to group them - that produces one point per policy (jagged, broken line). query pattern:
+- **time X axis - aggregation is mandatory**: aggregate dates in sql using `DATE_TRUNC` before charting. do NOT plot raw `renewal_date` values and rely on altair formatting to group them - that produces one point per policy (jagged, broken line). query pattern:
   ```sql
   SELECT DATE_TRUNC('month', renewal_date) AS period,
          SUM(is_renewed) * 1.0 / COUNT(*) AS renewal_rate
   FROM FACT_RENEWAL
   GROUP BY period ORDER BY period
   ```
-  use `'day'`, `'week'`, or `'month'` in `DATE_TRUNC` based on the date range of filtered data. Altair encoding: `alt.X("period:T", title=None)`
+  use `'day'`, `'week'`, or `'month'` in `DATE_TRUNC` based on the date range of filtered data. altair encoding: `alt.X("period:T", title=None)`
 
 ### legends
 
@@ -97,7 +122,7 @@ for segment labels (can be long): always set `axis=alt.Axis(labelLimit=200)` on 
 
 ## language conventions
 
-### KPI card labels
+### kpi card labels
 
 - sentence case, no abbreviations
 - correct: "Renewal rate", "Leakage rate", "Quote-to-bind rate", "Service delay index"
@@ -158,7 +183,7 @@ st.dataframe(styled, use_container_width=True)
 
 ## status color coding
 
-for AUDIT_LOG tables (tab 2 - agent operations). use `.map()`, NOT `.applymap()`.
+for `AUDIT_LOG` tables (tab 2 - agent operations). use `.map()`, NOT `.applymap()`.
 
 ```python
 def color_status(val):
@@ -176,12 +201,13 @@ st.dataframe(styled, use_container_width=True)
 
 ## success criteria
 
-- all charts use Altair (no `st.bar_chart`, `st.line_chart`)
+- all charts use altair (no `st.bar_chart`, `st.line_chart`)
 - primary color (#1565C0) used for all single-color positive-state charts
-- accent color (#FFA726) used for non-renewed / negative states
+- accent color (#FFA726) used for LAPSED state only
+- accent color (#FB8C00) used for NOT_TAKEN_UP state (distinct from LAPSED)
 - all percentage axes formatted to 1 decimal place (except premium bands: 0 decimals)
 - all categorical X axes with text labels have `labelAngle=0`
 - all multi-color legends are `orient="top"`
-- KPI labels are sentence case with no abbreviations
+- kpi labels are sentence case with no abbreviations
 - `.map()` used (not `.applymap()`) for all pandas styling
 - all `alt.X()` and `alt.Y()` encodings have explicit `title=` (except time-series X which uses `title=None`)

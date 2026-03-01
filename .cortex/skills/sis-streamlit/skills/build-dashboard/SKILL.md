@@ -1,18 +1,18 @@
 ---
 name: build-dashboard
-description: "scaffold, validate, and scan the Streamlit in Snowflake dashboard. three modes: (1) no args - load SiS constraints; (2) scaffold - generate dashboard.py at project root; (3) with file arg - pre-deploy scan + style validation. trigger when loading SiS constraints, scaffolding dashboard.py, running pre-deploy scan, or validating dashboard style. do NOT use for general Python linting, local Streamlit apps, or non-SiS deployments."
+description: "scaffold, validate, and scan the streamlit in snowflake dashboard. three modes: (1) no args - load sis constraints; (2) scaffold - generate dashboard.py at project root; (3) with file arg - pre-deploy scan + style validation. trigger when loading sis constraints, scaffolding dashboard.py, running pre-deploy scan, or validating dashboard style. do NOT use for general python linting, local streamlit apps, or non-sis deployments."
 ---
 
 -> Load `references/sis-api-constraints.md` on every invocation - full constraint detail, reasons, and error messages.
--> Load `references/sis-data-patterns.md` when generating Streamlit code - session usage, caching, date casting, NULL handling.
+-> Load `references/sis-data-patterns.md` when generating streamlit code - session usage, caching, date casting, NULL handling.
 
-## SiS API constraint table
+## sis api constraint table
 
-the following APIs are forbidden or restricted in Streamlit in Snowflake warehouse runtime.
+the following apis are forbidden or restricted in streamlit in snowflake warehouse runtime.
 some exist in the runtime but are unsafe (cause crashes, infinite loops, or unreliable behavior).
 some do not exist at all. both categories are forbidden in generated code.
 
-### forbidden: exists but unsafe in SiS warehouse runtime
+### forbidden: exists but unsafe in sis warehouse runtime
 
 | forbidden (exists but unsafe)     | use instead                                              | reason |
 |-----------------------------------|----------------------------------------------------------|--------|
@@ -24,11 +24,11 @@ some do not exist at all. both categories are forbidden in generated code.
 | forbidden                         | use instead                                              |
 |-----------------------------------|----------------------------------------------------------|
 | `st.experimental_rerun()` | session_state flag + conditional re-render |
-| `st.bar_chart(horizontal=True)` | Altair horizontal bar chart: `alt.Chart().mark_bar().encode(alt.Y(...), alt.X(...))` |
+| `st.bar_chart(horizontal=True)` | altair horizontal bar chart: `alt.Chart().mark_bar().encode(alt.Y(...), alt.X(...))` |
 | `style.applymap()` | `style.map()` (applymap removed in pandas 2.2.0) |
 | `PARSE_JSON()` in `VALUES (...)` | INSERT-SELECT: `INSERT INTO t SELECT ..., PARSE_JSON(...)` |
 | `st.slider` with `datetime.date` min/max | `st.date_input` for all date range selection |
-| `st.set_page_config(page_title=..., page_icon=..., menu_items=...)` | `st.set_page_config(layout="wide")` - only `layout` is supported in SiS |
+| `st.set_page_config(page_title=..., page_icon=..., menu_items=...)` | `st.set_page_config(layout="wide")` - only `layout` is supported in sis |
 | any `st.*` call before `st.set_page_config()` | `st.set_page_config()` must be the first st call |
 
 ### safe patterns
@@ -48,7 +48,7 @@ some do not exist at all. both categories are forbidden in generated code.
 
 ### discovery mode (no file argument)
 
-1. print the constraint table above. tell the agent: "SiS constraints loaded - use the replacements above when generating Streamlit code."
+1. print the constraint table above. tell the agent: "sis constraints loaded - use the replacements above when generating streamlit code."
 2. stop here. do not run scan or scaffold steps.
 
 ### scaffold mode (argument: scaffold)
@@ -191,11 +191,32 @@ elif page == "Activity Log":
 
 ### scan mode (argument: file path)
 
+> **MANDATORY SCAN. CANNOT BE SKIPPED OR SUMMARIZED.**
+> every step below must be executed in full. report each pattern check individually
+> with the exact count and every line number found. do NOT batch results or skip steps
+> because the file "looks correct." failure to run a step is itself a scan failure.
+
 1. confirm the file exists. if not found: stop and ask the user for the correct path.
 
-2. run Python syntax check: `python3 -m py_compile <file>` - must return exit code 0.
+2. run python syntax check: `python3 -m py_compile <file>` - must return exit code 0.
    if `python3` is not found, try `python -m py_compile <file>`.
    if it fails: show the full error and stop.
+
+2a. **dml injection check (CRITICAL - run before any other pattern scan):**
+    ```
+    grep -n "session\.sql(f" <file> | grep -iE "INSERT|UPDATE"
+    ```
+    any match = **FAIL**. stop here if any matches found.
+    message: "f-string dml with user text detected on line(s) [N]. load
+    `$ sis-streamlit -> secure-dml` and rewrite using session.call() to stored procedure.
+    do NOT proceed to deploy until this is fixed."
+
+    also check for the inverse - dml via session.call() must be present:
+    ```
+    grep -c "session\.call(" <file>
+    ```
+    if count = 0: **FAIL** - no stored procedure calls found. INSERT and UPDATE must go
+    through session.call(). load `$ sis-streamlit -> secure-dml`.
 
 3. scan for each forbidden pattern. report the match count. all must be 0:
    - `st\.rerun\(\)` - 0 results required
@@ -206,18 +227,39 @@ elif page == "Activity Log":
    - `st\.fragment` - 0 results required
    - `PARSE_JSON` in `session.sql(` or `snow sql -q` strings - 0 results required
    - `st\.slider` with `min_value` or `max_value` set to a date variable - 0 results required
-   - date values from `.collect()` passed to `st.date_input` without Python cast - 0 violations required
+   - date values from `.collect()` passed to `st.date_input` without python cast - 0 violations required
    - `SELECT DISTINCT` for filter option loading without `IS NOT NULL` - 0 violations required
-   - non-parameterized SQL with filter variable interpolation - FAIL if found:
-     grep -n `session\.sql(f` <file> then inspect each match for IN-clause variable interpolation.
-     violation: any `session.sql(f"... IN ({var}...")` or `session.sql(f"... WHERE ... {var} ...")`
-     where `var` is a user-selected filter value. these are SQL injection risks.
-     required fix: `selected = [r for r in user_selected if r in VALID_LIST]`
-     then: `session.table(...).filter(col("field").isin(selected))`
+   - non-parameterized sql with filter variable interpolation - FAIL if found:
+     grep -n `session\.sql(f` <file> then inspect each match for:
+     (a) IN-clause filter variable interpolation: any `session.sql(f"... IN ({var}...")` or
+         `session.sql(f"... WHERE ... {var} ...")` where `var` is a user-selected filter value.
+         fix: `selected = [r for r in user_selected if r in VALID_LIST]`
+         then: `session.table(...).filter(col("field").isin(selected))`
+     (b) INSERT or UPDATE with ANY user-supplied text from st.text_input, st.text_area,
+         st.selectbox, or any other widget - these are sql injection: FAIL.
+         fix: load `$ sis-streamlit -> secure-dml` and rewrite using session.call().
+     (c) CURRENT_SIS_USER or st.user.user_name interpolated in f-string sql - WARN
+         (low practical risk as it's a system value, but violates parameterized sql practice)
      exception: `session.sql(f"SELECT ... FROM {DATABASE}.{SCHEMA}...")` is OK - only DATABASE,
-     SCHEMA, and APP_NAME constants are allowed in f-string SQL. filter values are NEVER allowed.
-   **grep limitations:** patterns 8-11 require understanding data flow. grep catches obvious cases.
-   for edge cases, manually inspect `load_filter_options()` and all page query functions.
+     SCHEMA, and APP_NAME constants are allowed in f-string sql. user values are NEVER allowed.
+   **grep limitations:** patterns 8-11 and the dml check require understanding data flow.
+   grep catches obvious cases. for edge cases, manually inspect `load_filter_options()`,
+   all page query functions, and every INSERT/UPDATE site.
+
+3b. **audit event presence checks - all must be >= 1:**
+    ```
+    grep -c "FILTER_CHANGE" <file>
+    grep -c "FLAG_ADDED" <file>
+    grep -c "FLAG_REVIEWED" <file>
+    ```
+    any 0 count = **FAIL**. specific messages:
+    - `FILTER_CHANGE` = 0: sidebar filter changes are not being logged to `AUDIT_LOG`.
+      add `on_change=` callbacks to all sidebar multiselect and date_input widgets on pages
+      1 and 2. see AGENTS.md page 1/2 sidebar spec for the required on_change pattern.
+    - `FLAG_ADDED` = 0: flag submission is not being logged. add `log_audit_event("FLAG_ADDED", ...)`
+      after the `session.call()` INSERT call on page 2.
+    - `FLAG_REVIEWED` = 0: flag review is not being logged. add `log_audit_event("FLAG_REVIEWED", ...)`
+      after the `session.call()` UPDATE call on page 3.
 
 4. check `st.set_page_config` position:
    ```bash
@@ -258,7 +300,10 @@ scaffold mode:
 
 scan mode:
 - `python -m py_compile` returns exit code 0
+- dml injection check passes: 0 `session.sql(f` matches with INSERT/UPDATE
+- `session.call(` count >= 2 (INSERT_RENEWAL_FLAG + UPDATE_RENEWAL_FLAG)
 - all forbidden pattern counts are 0
+- audit event presence: FILTER_CHANGE, FLAG_ADDED, FLAG_REVIEWED each >= 1
 - `st.set_page_config(` is the first `st.*` call
 - style validation has 0 FAIL results
 - `snowflake.yml` exists in project root with correct values

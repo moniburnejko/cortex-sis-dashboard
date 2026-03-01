@@ -1,28 +1,40 @@
 ---
 name: sis-patterns
-description: "streamlit patterns for SiS warehouse runtime (streamlit 1.52.*). covers: snowflake connection, caching, user context, available widgets, layout, session state, data display, page config. use before writing any streamlit code in this project. sub-skill of sis-streamlit."
+description: "streamlit patterns for sis warehouse runtime (streamlit 1.52.*). covers: snowflake connection, caching, user context, available widgets, layout, session state, data display, page config. use before writing any streamlit code in this project. sub-skill of sis-streamlit."
 ---
 
--> Load `references/snowflake-sis-docs.md` on every invocation - SiS runtime model, owner's rights, st.user, environment.yml package rules, caching behavior.
+-> Load `references/snowflake-sis-docs.md` on every invocation - sis runtime model, owner's rights, st.user, environment.yml package rules, caching behavior.
 
 ## 1. snowflake connection
 
-always use `get_active_session()` from `snowflake.snowpark.context`. call it INSIDE functions -
-never capture it at module level. module-level session captures fail after token refresh in SiS.
+always use `get_active_session()` from `snowflake.snowpark.context`.
+
+**inside `@st.cache_data` functions:** MUST call `get_active_session()` inside the function.
+the module-level session is not accessible in cached function context and will fail.
+
+**module-level code (non-cached):** `session = get_active_session()` at module level is
+acceptable for the audit logger, page routing, and other non-cached code in `dashboard.py`.
+the project scaffold uses module-level session for these cases. this is intentional, not an error.
+
+| context | pattern |
+|---|---|
+| `@st.cache_data` function | call `get_active_session()` inside the function |
+| non-cached module-level code | module-level session is OK |
 
 ```python
 from snowflake.snowpark.context import get_active_session
 
-# correct: called inside each function that needs a session
+# correct inside @st.cache_data: call get_active_session() inside the function
+@st.cache_data(ttl=300)
 def load_data():
-    session = get_active_session()
-    return session.sql("SELECT ...").collect()
+    _session = get_active_session()   # inside the cached function
+    return _session.sql("SELECT ...").collect()
 
-# WRONG: module-level capture
-session = get_active_session()  # do NOT do this
+# acceptable at module level for non-cached code (audit logger, routing)
+session = get_active_session()   # OK — not inside @st.cache_data
 ```
 
-do NOT use `st.connection("snowflake")` - this is the SPCS pattern. in SiS, `get_active_session()`
+do NOT use `st.connection("snowflake")` - this is the spcs pattern. in sis, `get_active_session()`
 is the correct method.
 
 ---
@@ -50,7 +62,7 @@ and crashes `st.multiselect` at runtime with a TypeError.
 
 ## 3. user context
 
-in SiS, `CURRENT_USER()` (SQL) returns the app service account - the user who deployed the app,
+in sis, `CURRENT_USER()` (sql) returns the app service account - the user who deployed the app,
 not the person currently viewing it. to get the logged-in viewer's identity:
 
 ```python
@@ -59,7 +71,7 @@ CURRENT_SIS_USER = st.user.user_name or "unknown"
 
 always use `CURRENT_SIS_USER` (not `CURRENT_USER()`) when:
 - inserting `flagged_by` or `reviewed_by` into domain tables
-- passing `p_user_name` to LOG_AUDIT_EVENT
+- passing `p_user_name` to `LOG_AUDIT_EVENT`
 - filtering rows to the current viewer in WHERE clauses
 
 `st.user.user_name` is available and safe in streamlit 1.52.2.
@@ -78,7 +90,7 @@ safe to use:
 - `st.text_input(label)`, `st.text_area(label, max_chars=500)` - text input
 - `st.button(label)`, `st.form(key)`, `st.form_submit_button(label)` - actions and forms
 
-forbidden or broken in SiS 1.52:
+forbidden or broken in sis 1.52:
 - `st.slider` with `datetime.date` as `min_value` or `max_value` - use `st.date_input` instead
 - `st.container(horizontal=True)` - parameter does not exist in 1.52; use `st.columns()`
 - `st.metric(..., chart_data=...)` sparklines - not available in 1.52
@@ -141,7 +153,7 @@ if current != st.session_state.selected_regions:
 
 - `st.dataframe(df)` - read-only table display
 - `st.data_editor(df)` - editable table with checkbox column support
-- `st.metric(label, value, delta)` - KPI card; no `chart_data` parameter in 1.52
+- `st.metric(label, value, delta)` - kpi card; no `chart_data` parameter in 1.52
 
 **snowflake column names are UPPERCASE:** `session.sql(...).to_pandas()` and
 `session.table(...).to_pandas()` return DataFrames with UPPERCASE column names (e.g.
@@ -159,11 +171,11 @@ df.groupby(["price_shock_band", "region"])...
 df.groupby(["price_shock_band", "region"])...   # KeyError if column is PRICE_SHOCK_BAND
 ```
 
-charts: use Altair only. do NOT use `st.bar_chart`, `st.line_chart`, or `st.scatter_chart`
+charts: use altair only. do NOT use `st.bar_chart`, `st.line_chart`, or `st.scatter_chart`
 for dashboard charts - native streamlit charts cannot format percentage axes or support
-advanced axis labeling. see `brand-identity` for Altair chart rules and color palette.
+advanced axis labeling. see `brand-identity` for altair chart rules and color palette.
 
-date values from `.collect()` MUST be cast to Python `datetime.date` before use in widgets
+date values from `.collect()` MUST be cast to python `datetime.date` before use in widgets
 or comparisons:
 
 ```python
@@ -185,7 +197,7 @@ cell-level styling functions. see `brand-identity` for styling examples.
 `st.set_page_config(layout="wide")` MUST be the first `st.*` call in the file - before any
 other streamlit call, including `st.title`, `st.sidebar`, or any widget.
 
-only the `layout` parameter is supported in SiS. do NOT pass `page_title`, `page_icon`,
+only the `layout` parameter is supported in sis. do NOT pass `page_title`, `page_icon`,
 or `menu_items` - they are ignored in warehouse runtime and may cause warnings.
 
 ```python
