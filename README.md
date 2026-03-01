@@ -1,51 +1,58 @@
 # renewal radar sis dashboard
 
-Insurance renewal analytics dashboard built autonomously by Cortex Code CLI.
+cortex code cli demo: autonomous end-to-end build — infra, data load, streamlit in snowflake app, audit loop. zero manual code.
 
-End-to-end demonstration of agent-driven development: infrastructure setup, Streamlit app, and governance audit loop — all executed by an AI agent following structured specifications.
+## what this is
 
-## what's in here
+cortex code cli takes `AGENTS.md` as input and autonomously:
+1. creates logging infrastructure (AUDIT_LOG, APP_EVENTS, V_APP_EVENTS, LOG_AUDIT_EVENT), domain table, and stage
+2. loads 3 csv files into source tables via internal stage
+3. builds and deploys a 3-page streamlit in snowflake dashboard
+4. logs user interactions and agent operations via LOG_AUDIT_EVENT procedure
 
-- [`AGENTS.md`](AGENTS.md) — project specification for Cortex Code CLI (single source of truth)
-- [`dashboard.py`](dashboard.py) — Streamlit in Snowflake app
-- [`snowflake.yml`](snowflake.yml) — SiS deployment config
-- [`environment.yml`](environment.yml) — Conda environment (streamlit 1.52.*, altair, pandas)
-- [`.cortex/skills/`](.cortex/skills/) — project skills invoked by the agent
-- [`docs/prompts.md`](docs/prompts.md) — 4-phase session prompts with checkpoints
-- [`docs/reports/`](docs/reports/) — session reports from Cortex Code CLI runs
+## repo contents
 
-## dashboard
+| file/dir | description |
+|---|---|
+| `AGENTS.md` | cortex code cli project spec - single source of truth |
+| `dashboard.py` | streamlit in snowflake app |
+| `snowflake.yml` | sis deployment config |
+| `environment.yml` | conda env - streamlit 1.52.*, altair, pandas |
+| `.cortex/skills/` | project skills invoked by the agent |
+| `docs/prompts.md` | 4-phase session prompts with checkpoints |
+| `docs/reports/` | session reports from cortex code cli runs |
+| `.githooks/` | pre-commit hook for credential sanitization |
 
-3-page Streamlit in Snowflake app:
+## dashboard pages
 
-1. **KPI Overview** — renewal rate, leakage rate, quote-to-bind, service delay index; trend and regional breakdown charts
-2. **Premium Pressure** — price shock analysis, premium change by outcome, heatmap; flag-for-review write-back
-3. **Activity Log** — user interaction audit trail; inline flag review with mark-reviewed write-back
+1. **kpi overview** - renewal rate, leakage rate, quote-to-bind, service delay index + trend and regional breakdown charts
+2. **premium pressure** - price shock analysis, premium change by outcome, heatmap + flag-for-review write-back to RENEWAL_FLAGS
+3. **activity log** - user interaction audit trail, inline flag review with mark-reviewed write-back
 
 ## running a session
 
-See [`docs/prompts.md`](docs/prompts.md) for the full 4-phase workflow.
+see `docs/prompts.md` for the full 4-phase workflow (infrastructure, data load, dashboard build, verification).
 
-Quick start:
 ```bash
-# 1. install personal skills to ~/.snowflake/cortex/skills/
-#    (check-local-environment, sis-streamlit)
+# install personal skills to ~/.snowflake/cortex/skills/
+# (check-local-environment, sis-streamlit)
 
-# 2. cd to this directory and start cortex code cli
 cd dashboard-sis
 cortex
 ```
 
 ## credential sanitization
 
-This repo uses a pre-commit hook to replace real Snowflake object names with placeholders before committing. Real values stay local only.
+real snowflake object names are replaced with placeholders by the pre-commit hook before every commit.
 
-Setup (one-time):
+one-time setup:
 ```bash
 git config core.hooksPath .githooks
 cp .githooks/sanitize-map.example .githooks/.sanitize-map
-# fill in real values in .sanitize-map
+# fill in real values
 ```
 
-To check for exposed credentials: `.githooks/sanitize.sh --check`
-To restore real names locally after a pull: `.githooks/sanitize.sh --reverse`
+```bash
+.githooks/sanitize.sh --check    # verify no credentials exposed
+.githooks/sanitize.sh --reverse  # restore real names locally after pull
+```
