@@ -458,9 +458,12 @@ potentially the semantic model layer. next steps:
 
 ## 7. appendix: source reports
 
+consolidated reports (current):
+
 | report | file | covers |
 |---|---|---|
-| phase 1 final | phase_01_run_02.md | infrastructure ddl, data load, 8 acceptance checks |
-| phase 2 final | phase_02_run_04.md | dashboard build, 5 deploy cycles, display-label layer |
-| phase 3 final | phase_03_run_01.md | write-back verification, 5 sql checks, ccc_report.md analysis |
-| code review | code_review_dashboard.md | 6 issues in final dashboard.py (707 lines) |
+| execution history | docs/reports/execution.md | all runs across 3 phases; done criteria; deviations |
+| code review | docs/reports/code_review.md | both dashboard.py reviews (707 and 728 lines); resolution tracking |
+| lessons learned | docs/reports/lessons_learned.md | skill compliance cross-phase; deviation categories; governance changes |
+
+detailed session logs available in archive/ (project root). files retained under original names for adr cross-references.
