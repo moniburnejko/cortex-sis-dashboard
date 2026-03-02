@@ -125,22 +125,45 @@ if "date_from" not in st.session_state:
 if "date_to" not in st.session_state:
     st.session_state["date_to"] = MAX_DATE
 
+# --- filter change callbacks ---
+def log_filter_change_p1():
+    """Callback for Page 1 filter changes"""
+    log_audit_event("FILTER_CHANGE", "USER_INTERACTION",
+                    "page_1_kpi_overview", "sidebar_filters", "multiselect_change")
+
+def log_filter_change_p2():
+    """Callback for Page 2 filter changes"""
+    log_audit_event("FILTER_CHANGE", "USER_INTERACTION",
+                    "page_2_premium_pressure", "sidebar_filters", "multiselect_change")
+
 # --- navigation ---
 page = st.sidebar.radio("Navigation", ["KPI Overview", "Premium Pressure", "Activity Log"])
 
 # --- shared filters (sidebar) ---
 st.sidebar.header("Filters")
+
+# Determine which callback to use based on current page
+if page == "KPI Overview":
+    filter_callback = log_filter_change_p1
+elif page == "Premium Pressure":
+    filter_callback = log_filter_change_p2
+else:
+    filter_callback = None  # No logging for Activity Log page
+
 sel_regions = st.sidebar.multiselect(
     "Region", VALID_REGIONS, key="sel_regions",
-    format_func=lambda x: REGION_LABELS.get(x, x)
+    format_func=lambda x: REGION_LABELS.get(x, x),
+    on_change=filter_callback
 )
 sel_segments = st.sidebar.multiselect(
     "Segment", VALID_SEGMENTS, key="sel_segments",
-    format_func=lambda x: SEGMENT_LABELS.get(x, x)
+    format_func=lambda x: SEGMENT_LABELS.get(x, x),
+    on_change=filter_callback
 )
 sel_channels = st.sidebar.multiselect(
     "Channel", VALID_CHANNELS, key="sel_channels",
-    format_func=lambda x: CHANNEL_LABELS.get(x, x)
+    format_func=lambda x: CHANNEL_LABELS.get(x, x),
+    on_change=filter_callback
 )
 date_from = st.sidebar.date_input(
     "Renewal date from",
@@ -148,6 +171,7 @@ date_from = st.sidebar.date_input(
     min_value=MIN_DATE,
     max_value=MAX_DATE,
     format="YYYY-MM-DD",
+    on_change=filter_callback
 )
 date_to = st.sidebar.date_input(
     "Renewal date to",
@@ -155,6 +179,7 @@ date_to = st.sidebar.date_input(
     min_value=MIN_DATE,
     max_value=MAX_DATE,
     format="YYYY-MM-DD",
+    on_change=filter_callback
 )
 
 # --- page routing ---
@@ -310,7 +335,7 @@ elif page == "Premium Pressure":
     st.title("Premium Pressure Analysis")
     
     # Page-specific filter: Final Offers Only
-    final_offers_only = st.sidebar.toggle("Final Offers Only", value=True)
+    final_offers_only = st.sidebar.toggle("Final Offers Only", value=True, on_change=log_filter_change_p2)
     
     # Validate filters
     valid_sel_regions = [r for r in sel_regions if r in VALID_REGIONS]
@@ -554,20 +579,20 @@ elif page == "Premium Pressure":
     submit_enabled = len(scope_parts) > 0 and flag_reason.strip() != ""
     
     if st.button("Submit flag", disabled=not submit_enabled):
-        session.sql(f"""
-            INSERT INTO {DATABASE}.{SCHEMA}.RENEWAL_FLAGS 
-            (flagged_by, scope, scope_region, scope_segment, scope_channel, flag_reason)
-            VALUES ('{CURRENT_SIS_USER}', '{scope}', 
-                    {'NULL' if scope_region is None else f"'{scope_region}'"}, 
-                    {'NULL' if scope_segment is None else f"'{scope_segment}'"}, 
-                    {'NULL' if scope_channel is None else f"'{scope_channel}'"}, 
-                    '{flag_reason}')
-        """).collect()
+        flag_id = session.call(
+            f"{DATABASE}.{SCHEMA}.INSERT_RENEWAL_FLAG",
+            CURRENT_SIS_USER,   # p_flagged_by
+            scope,              # p_scope
+            scope_region,       # p_scope_region
+            scope_segment,      # p_scope_segment
+            scope_channel,      # p_scope_channel
+            flag_reason         # p_flag_reason
+        )
         
         log_audit_event("FLAG_ADDED", "USER_INTERACTION", "page_2_premium_pressure", 
                        "flag_for_review", "flag_submitted")
         
-        st.success(f"Flag submitted successfully: {scope}")
+        st.success(f"Flag submitted: {flag_id}")
 
 elif page == "Activity Log":
     st.title("Activity Log")
@@ -655,18 +680,14 @@ elif page == "Activity Log":
             
             if st.button("Mark reviewed", disabled=len(selected_flags) == 0):
                 flag_ids = selected_flags['flag_id'].tolist()
-                flag_ids_str = "','".join(flag_ids)
+                flag_ids_str = ",".join(flag_ids)
                 
-                session.sql(f"""
-                    UPDATE {DATABASE}.{SCHEMA}.RENEWAL_FLAGS
-                    SET status = 'REVIEWED',
-                        reviewed_by = '{CURRENT_SIS_USER}',
-                        reviewed_at = CURRENT_TIMESTAMP(),
-                        notes = '{review_notes}'
-                    WHERE flag_id IN ('{flag_ids_str}')
-                      AND flagged_by = '{CURRENT_SIS_USER}'
-                      AND status = 'OPEN'
-                """).collect()
+                session.call(
+                    f"{DATABASE}.{SCHEMA}.UPDATE_RENEWAL_FLAG",
+                    CURRENT_SIS_USER,   # p_reviewed_by
+                    review_notes,       # p_notes
+                    flag_ids_str        # p_flag_ids
+                )
                 
                 log_audit_event("FLAG_REVIEWED", "USER_INTERACTION", "page_3_activity_log",
                                "review_flags", "mark_reviewed")
