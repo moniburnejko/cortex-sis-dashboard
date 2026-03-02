@@ -71,6 +71,7 @@ do_check() {
 
     while IFS= read -r filepath; do
         [[ -z "$filepath" ]] && continue
+        [[ "$filepath" == .githooks/* ]] && continue
         local fullpath="$REPO_ROOT/$filepath"
         [[ -f "$fullpath" ]] || continue
         is_binary "$fullpath" && continue
@@ -102,6 +103,7 @@ do_replace() {
 
     while IFS= read -r filepath; do
         [[ -z "$filepath" ]] && continue
+        [[ "$filepath" == .githooks/* ]] && continue
         local fullpath="$REPO_ROOT/$filepath"
         [[ -f "$fullpath" ]] || continue
         is_binary "$fullpath" && continue

@@ -83,6 +83,8 @@ interaction.
 ## prompt 1: infrastructure
 
 ```
+invoke $ check-local-environment, then $ check-snowflake-context. do not proceed until both pass.
+
 set up phase 1 infrastructure: logging objects, domain table, stage,
 and source tables.
 do not load csv data yet.
@@ -104,6 +106,8 @@ if anything is missing, tell the agent what is missing.
 ## prompt 2: data load
 
 ```
+invoke $ check-local-environment, then $ check-snowflake-context. do not proceed until both pass.
+
 validate and load all 3 csv files into the source tables.
 log the data load operation.
 use $ sis-streamlit to run the phase 1 acceptance checks and show the full results.
@@ -135,6 +139,8 @@ if anything fails, tell the agent exactly what failed (use template from session
 enter `/plan` before pasting this prompt.
 
 ```
+invoke $ check-local-environment, then $ check-snowflake-context. do not proceed until both pass.
+
 phase 1 is complete. all infrastructure and data are in place.
 build and deploy the dashboard.
 stop after showing the app url and wait for my confirmation
@@ -171,7 +177,6 @@ if everything works:
 checkpoint 3 verified. all 3 pages render correctly.
 i have tested filter changes on page 1, flag submission on page 2,
 and flag review on page 3. my username appears in USER_NAME and FLAGGED_BY.
-proceed to final verification.
 ```
 
 if an error appears, use the error reporting template from the session
@@ -186,6 +191,8 @@ the agent to verify what changed between deploys.
 ## prompt 4: final verification
 
 ```
+invoke $ check-local-environment, then $ check-snowflake-context. do not proceed until both pass.
+
 use $ sis-streamlit to run the full acceptance check across all phases.
 for the manual app-renders criterion, mark it as confirmed,
 i have already verified it.
