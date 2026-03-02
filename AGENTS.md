@@ -58,7 +58,7 @@ invoke with `$ skill-name`. do NOT replicate skill steps manually - manual execu
 > **NOTE ON `->` SYNTAX:** `$ skill-name -> sub-skill` is conceptual routing notation in this document.
 > it means: invoke `$ skill-name`, then follow the routing table to the named sub-skill SKILL.md.
 > `->` is NOT a compound cli command. do NOT execute it as `$ sis-streamlit -> secure-dml` literally.
-> the correct invocation is always: `$ sis-dashboard` which routes to sub-skills via project-relative paths.
+> the correct invocation is always: `$ sis-streamlit` which routes to sub-skills via project-relative paths.
 
 > **skill constraints - bypassing any of these is not allowed:**
 >
@@ -502,7 +502,7 @@ price_shock_band = CASE
 
 ## done criteria - phase 1
 
-run `$ sis-dashboard` -> `deploy-and-verify phase-1` to verify. do NOT run these sql checks manually. do NOT proceed to SECTION 2 until all checks pass.
+run `$ sis-streamlit` -> `deploy-and-verify phase-1` to verify. do NOT run these sql checks manually. do NOT proceed to SECTION 2 until all checks pass.
 
 ```sql
 -- source tables loaded
@@ -763,7 +763,7 @@ status color coding: see brand-identity for the `.map()` color function (do NOT 
 
 ## done criteria - phase 2
 
-run `$ sis-dashboard` -> `deploy-and-verify phase-2` to verify. do NOT run these sql checks manually. do NOT proceed to SECTION 3 until confirmed.
+run `$ sis-streamlit` -> `deploy-and-verify phase-2` to verify. do NOT run these sql checks manually. do NOT proceed to SECTION 3 until confirmed.
 
 ```
 snow streamlit list -> {app_name} must appear
@@ -838,7 +838,7 @@ if prior session memory is found:
 
 ## done criteria - phase 3
 
-run `$ sis-dashboard` -> `deploy-and-verify phase-3` to verify. do NOT run these sql checks manually.
+run `$ sis-streamlit` -> `deploy-and-verify phase-3` to verify. do NOT run these sql checks manually.
 
 ### phase 3 - write-back
 ```sql

@@ -9,7 +9,7 @@ in phase 2+, the agent treated a manual `SELECT CURRENT_ROLE()` or reading a mem
 
 ## decision
 
-AGENTS.md session start gate reinforced with an explicit STOP and a note: "manual sql is not equivalent to skill invocation. running `SELECT CURRENT_ROLE()` does NOT substitute for calling the check-local-environment skill". the skill must be invoked via the cortex code cli, not through manual sql commands. the pattern from phase_01 where the prompt explicitly said `use $ sis-dashboard` (an explicit cli invocation): that pattern works.
+AGENTS.md session start gate reinforced with an explicit STOP and a note: "manual sql is not equivalent to skill invocation. running `SELECT CURRENT_ROLE()` does NOT substitute for calling the check-local-environment skill". the skill must be invoked via the cortex code cli, not through manual sql commands. the pattern from phase_01 where the prompt explicitly said `use $ sis-streamlit` (an explicit cli invocation): that pattern works.
 
 ## alternatives considered
 
@@ -20,7 +20,7 @@ AGENTS.md session start gate reinforced with an explicit STOP and a note: "manua
 ## consequences
 
 - requires education in every prompt: explicit skill naming or cli command
-- `use $ sis-dashboard` as the preferred pattern in prompts.md
+- `use $ sis-streamlit` as the preferred pattern in prompts.md
 - AGENTS.md contains an explicit note that manual sql does not substitute for skill invocation
 - `->` notation in AGENTS.md (e.g. `check-local-environment -> phase 1`) is a conceptual routing hint, not a literal cli command. this interpretation is reinforced in AGENTS.md
 

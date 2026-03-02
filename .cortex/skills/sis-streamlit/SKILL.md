@@ -1,6 +1,6 @@
 ---
 name: sis-streamlit
-description: "use for ALL streamlit tasks in this project: building, editing, debugging, styling, or deploying. sis warehouse runtime (streamlit 1.52.*) - supersedes the global developing-with-streamlit skill. routes to: sis-patterns (connection, caching, widgets, layout, session state), build-dashboard (constraints, scaffold, scan), brand-identity (visual identity, chart rules), secure-dml (stored procedure patterns for dml with user text), deploy-and-verify (deploy + acceptance checks)."
+description: "use for ALL streamlit tasks in this project: building, editing, debugging, styling, deploying, or running acceptance checks. sis warehouse runtime (streamlit 1.52.*) - supersedes the global developing-with-streamlit skill. routes to: sis-patterns, build-dashboard, brand-identity, secure-dml, deploy-and-verify."
 ---
 
 ## runtime context
@@ -12,27 +12,55 @@ the global `developing-with-streamlit` skill targets spcs container runtime. its
 connection, dependencies, deployment, and streamlit apis are wrong for this project.
 use the sub-skills below instead.
 
-## sub-skill routing
+## routing table
 
 | task | load |
-|------|------|
-| writing any streamlit code: connection, caching, widgets, layout, session state, user context | `-> Load skills/sis-patterns/SKILL.md` |
-| load sis api constraints before writing code / scaffold dashboard.py / pre-deploy scan | `-> Load skills/build-dashboard/SKILL.md` |
-| load visual identity: colors, chart type rules, language conventions | `-> Load skills/brand-identity/SKILL.md` |
-| writing INSERT or UPDATE with user text (flag form, review form, any dml with st.text_input / st.text_area) | `-> Load skills/secure-dml/SKILL.md` |
-| deploy the sis app or run phase acceptance checks | `-> Load skills/deploy-and-verify/SKILL.md` |
+|---|---|
+| check local tooling (snow cli, config.toml, python) | `$ check-local-environment` (personal skill) |
+| verify snowflake role, warehouse, schema objects | `.cortex/skills/check-snowflake-context/SKILL.md` |
+| validate and load csv files | `.cortex/skills/prepare-data/SKILL.md` |
+| writing any streamlit code: connection, caching, widgets, layout, session state | `.cortex/skills/sis-streamlit/skills/sis-patterns/SKILL.md` |
+| load sis api constraints before writing code / scaffold dashboard.py / pre-deploy scan | `.cortex/skills/sis-streamlit/skills/build-dashboard/SKILL.md` |
+| load visual identity: colors, chart type rules, language conventions | `.cortex/skills/sis-streamlit/skills/brand-identity/SKILL.md` |
+| writing INSERT or UPDATE with user text (flag form, review form) | `.cortex/skills/sis-streamlit/skills/secure-dml/SKILL.md` |
+| deploy the sis app or run phase acceptance checks | `.cortex/skills/sis-streamlit/skills/deploy-and-verify/SKILL.md` |
 
-when writing dashboard code, load in this order:
-1. `sis-patterns` - sis runtime patterns (connection, caching, widgets, layout)
-2. `build-dashboard` - sis api constraints and forbidden patterns
-3. `brand-identity` - visual identity, chart type rules, colors
-4. `secure-dml` - stored procedure patterns for dml with user text
-   (load before writing page 2 flag form or page 3 review update code)
+## standard workflow sequence
+
+```
+phase 0 - session start
+  1. $ check-local-environment      (snow cli, config.toml, python)
+  2. check-snowflake-context        (role, warehouse, database, schema objects)
+
+before writing any streamlit code
+  3. build-dashboard                (discovery mode - loads sis api constraints)
+  4. brand-identity                 (visual identity, chart type rules, colors)
+
+phase 1 - data loading
+  5. prepare-data                   (validate csv files + PUT + COPY INTO)
+  6. deploy-and-verify phase-1      (infrastructure acceptance checks)
+
+phase 2 - dashboard build and deploy
+  7. build-dashboard scaffold       (generate dashboard.py at project root)
+  8. secure-dml                     (stored procedure ddl for flag INSERT and review UPDATE)
+     [implement page content per AGENTS.md page specifications]
+  9. build-dashboard <file>         (scan mode - forbidden patterns + dml injection + audit presence)
+ 10. deploy-and-verify deploy       (snow streamlit deploy --replace)
+ 11. deploy-and-verify phase-2      (dashboard acceptance checks)
+
+phase 3 - write-back acceptance
+ 12. deploy-and-verify phase-3      (flag write-back + audit log checks)
+```
+
+## stopping points
+
+- if phase is not specified in the user prompt: confirm which phase to run before proceeding
+- if phase is specified (e.g. "phase 1 acceptance checks", "deploy-and-verify phase-1"): route directly, do NOT ask
 
 ## sis vs spcs: critical differences
 
 | topic | global skill (spcs) | this project (sis) |
-|-------|---------------------|--------------------|
+|---|---|---|
 | snowflake connection | `st.connection("snowflake")` | `get_active_session()` inside functions |
 | dependencies file | `pyproject.toml` + pip | `environment.yml` (project root) + anaconda channel |
 | streamlit version | `streamlit>=1.53.0` | `streamlit=1.52.*` (pinned) |

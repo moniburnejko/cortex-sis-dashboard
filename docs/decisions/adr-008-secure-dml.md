@@ -19,7 +19,7 @@ a separate sub-skill `secure-dml/SKILL.md`: one file, one responsibility. ddl de
 
 ## consequences
 
-- skill visible in the routing table in `sis-dashboard/SKILL.md` and `sis-streamlit/SKILL.md`
+- skill visible in the routing table in `sis-streamlit/SKILL.md`
 - new step 8 in the standard workflow sequence: "load secure-dml before writing flag form"
 - agent MUST load it before the flag form code. enforced by an AGENTS.md constraint
 - placed in `.cortex/skills/sis-streamlit/skills/secure-dml/` and committed to git
@@ -28,5 +28,5 @@ a separate sub-skill `secure-dml/SKILL.md`: one file, one responsibility. ddl de
 
 - [adr-007](adr-007-dml-procedures.md): the dml patterns this skill documents
 - `.cortex/skills/sis-streamlit/skills/secure-dml/SKILL.md`
-- `.cortex/skills/sis-dashboard/SKILL.md`: routing table
+- `.cortex/skills/sis-streamlit/SKILL.md`: routing table
 - AGENTS.md: constraint referencing secure-dml

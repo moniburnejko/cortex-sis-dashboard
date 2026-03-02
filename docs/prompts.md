@@ -6,14 +6,13 @@ complete these steps before launching cortex code cli:
 
 1. install skills
    - project skills in `.cortex/skills/` (shared via git):
-     sis-dashboard, check-snowflake-context, prepare-data,
+     check-snowflake-context, prepare-data,
      sis-streamlit sub-skills:
-     sis-patterns, build-dashboard, brand-identity, deploy-and-verify
+     sis-patterns, build-dashboard, brand-identity, deploy-and-verify, secure-dml
    - personal skills in `~/.snowflake/cortex/skills/` (do not commit):
      check-local-environment, sis-streamlit
-     NOTE: sis-streamlit sub-skills live in `.cortex/skills/`, not in personal skills.
-     do NOT invoke `$ sis-streamlit` directly to access sub-skills - use `$ sis-dashboard`
-     which routes to sub-skills via project-relative paths.
+     NOTE: sis-streamlit sub-skills live in `.cortex/skills/sis-streamlit/skills/`.
+     invoke `$ sis-streamlit` which routes to sub-skills via project-relative paths.
 
 2. copy AGENTS.md to the project root.
    cortex code cli loads it automatically from the working directory.
@@ -47,7 +46,7 @@ complete these steps before launching cortex code cli:
 - the agent must stay within the schema defined in AGENTS.md.
 - if the agent writes INSERT or UPDATE using f-strings with values from
   `st.text_input`, `st.text_area`, or any user widget: **stop it immediately.**
-  require `$ sis-dashboard -> secure-dml` before any DML code is written.
+  require `$ sis-streamlit -> secure-dml` before any DML code is written.
   the fix requires a stored procedure, not whitelist validation.
 - if the agent builds SQL with f-strings using user-selected filter values
   (regions, segments, channels in IN-clauses): stop and ask for whitelist
@@ -56,7 +55,7 @@ complete these steps before launching cortex code cli:
   at session start and proceeds directly to SQL or code: remind it to use the
   skills. direct SQL checks or memory file checks are not equivalent.
 - if the agent runs pre-deploy scan as manual grep/bash commands instead of
-  `$ sis-dashboard -> build-dashboard dashboard.py`: remind it to use the skill.
+  `$ sis-streamlit -> build-dashboard dashboard.py`: remind it to use the skill.
   the skill includes DML injection checks and audit event presence checks that
   manual grep sequences miss.
 - ADD SEARCH OPTIMIZATION may return "already exists." this is expected.
@@ -107,7 +106,7 @@ if anything is missing, tell the agent what is missing.
 ```
 validate and load all 3 csv files into the source tables.
 log the data load operation.
-use $ sis-dashboard to run the phase 1 acceptance checks and show the full results.
+use $ sis-streamlit to run the phase 1 acceptance checks and show the full results.
 stop and wait for my confirmation.
 ```
 
@@ -187,7 +186,7 @@ the agent to verify what changed between deploys.
 ## prompt 4: final verification
 
 ```
-use $ sis-dashboard to run the full acceptance check across all phases.
+use $ sis-streamlit to run the full acceptance check across all phases.
 for the manual app-renders criterion, mark it as confirmed,
 i have already verified it.
 if any criterion fails, report the root cause but do not
@@ -214,7 +213,7 @@ this is a security and completeness scan of the deployed dashboard.py.
 run it after checkpoint 3 passes and after committing to git.
 
 ```
-use $ sis-dashboard -> build-dashboard dashboard.py to run a full
+use $ sis-streamlit -> build-dashboard dashboard.py to run a full
 post-deployment security scan of the file.
 report every issue found including:
 - any session.sql(f matches containing INSERT or UPDATE
