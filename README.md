@@ -21,13 +21,14 @@ cortex code cli takes `AGENTS.md` as input and autonomously:
 | `.cortex/skills/` | project skills invoked by the agent |
 | `docs/prompts.md` | 4-phase session prompts with checkpoints |
 | `docs/reports/` | session reports from cortex code cli runs |
+| `archive/` | historical per-session execution logs |
 | `.githooks/` | pre-commit hook for credential sanitization |
 
 ## dashboard pages
 
-1. **kpi overview** - renewal rate, leakage rate, quote-to-bind, service delay index + trend and regional breakdown charts
-2. **premium pressure** - price shock analysis, premium change by outcome, heatmap + flag-for-review write-back to `RENEWAL_FLAGS`
-3. **activity log** - user interaction audit trail, inline flag review with mark-reviewed write-back
+1. kpi overview - renewal rate, leakage rate, quote-to-bind, service delay index + trend and regional breakdown charts
+2. premium pressure - price shock analysis, premium change by outcome, heatmap + flag-for-review write-back to `RENEWAL_FLAGS`
+3. activity log - user interaction audit trail, inline flag review with mark-reviewed write-back
 
 ## running a session
 
@@ -44,15 +45,3 @@ cortex
 ## credential sanitization
 
 real snowflake object names are replaced with placeholders by the pre-commit hook before every commit.
-
-one-time setup:
-```bash
-git config core.hooksPath .githooks
-cp .githooks/sanitize-map.example .githooks/.sanitize-map
-# fill in real values
-```
-
-```bash
-.githooks/sanitize.sh --check    # verify no credentials exposed
-.githooks/sanitize.sh --reverse  # restore real names locally after pull
-```

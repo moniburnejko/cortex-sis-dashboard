@@ -20,7 +20,7 @@ was not in the prompt text, which caused the agent to skip it on the first attem
 phase 2 builds and deploys the 3-page streamlit in snowflake dashboard.
 it is a single prompt (prompt 3) with a checkpoint before phase 3 begins.
 
-- **prompt 3 (dashboard build and deploy):**
+- prompt 3 (dashboard build and deploy):
   - enter `/plan` before pasting the prompt (required per prompts.md)
   - load sis patterns via `$ sis-streamlit` before planning
   - scaffold structure via `$ sis-streamlit` -> `build-dashboard` (no args)
@@ -221,47 +221,47 @@ agent stopped and waited for confirmation.
 
 ### deviation 1: session start gate not invoked on first attempt
 
-**what happened:** the agent received prompt 3, entered plan mode, and proposed a build plan without invoking `$ check-local-environment` or `$ check-snowflake-context`. the agent was interrupted mid-plan and explicitly required gate checks. the agent updated the plan and
+what happened: the agent received prompt 3, entered plan mode, and proposed a build plan without invoking `$ check-local-environment` or `$ check-snowflake-context`. the agent was interrupted mid-plan and explicitly required gate checks. the agent updated the plan and
 the gate passed on the second attempt.
 
-**root cause:** the prompt text did not include the gate instruction (pre-fix version of
+root cause: the prompt text did not include the gate instruction (pre-fix version of
 prompts.md). the agent relied on its memory (phase 1 complete) rather than the mandatory
 gate checks. this is the same pattern as runs 02-04.
 
-**consequence:** gate ran after intervention, not before planning. no practical impact
+consequence: gate ran after intervention, not before planning. no practical impact
 (context was correct), but the gate exists to catch environment drift and was bypassed
 on the first attempt.
 
-**status:** partial fix - gate ran after reminder. prompts.md was subsequently updated to include the gate instruction explicitly. see adr-012.
+status: partial fix - gate ran after reminder. prompts.md was subsequently updated to include the gate instruction explicitly. see adr-012.
 
 ### deviation 2: scan and deploy ran as direct commands
 
-**what happened:** the pre-deploy scan ran as direct bash commands (grep, python3 -m py_compile)
+what happened: the pre-deploy scan ran as direct bash commands (grep, python3 -m py_compile)
 rather than via `$ sis-streamlit` -> `build-dashboard`. deployment ran as direct
 `snow streamlit deploy --replace` rather than via `$ sis-streamlit` -> `deploy-and-verify`.
 
-**root cause:** same as all prior runs - skill files are markdown checklists read by the agent,
+root cause: same as all prior runs - skill files are markdown checklists read by the agent,
 not executable wrappers. the agent reads the skill content and follows steps directly.
 
-**consequence:** no correctness impact in this run (all critical checks from the skill were
+consequence: no correctness impact in this run (all critical checks from the skill were
 run). deploy-and-verify sub-skill was not explicitly read before deploy (though build-dashboard
 was read).
 
-**status:** open pattern.
+status: open pattern.
 
 ### deviation 3: grep exit code 1 for zero-match patterns
 
-**what happened:** the combined forbidden-pattern grep command (st.rerun, st.fragment,
+what happened: the combined forbidden-pattern grep command (st.rerun, st.fragment,
 .applymap, st.experimental_rerun with `&&`) returned exit code 1 because grep exits 1
 when no matches are found. the bash command was marked as failed in the tool output.
 
-**root cause:** grep returns exit code 1 for zero matches, not exit code 0. chaining with
+root cause: grep returns exit code 1 for zero matches, not exit code 0. chaining with
 `&&` causes the overall command to fail when any pattern has 0 matches.
 
-**consequence:** the agent correctly interpreted the output (counts all 0) as PASS. no
+consequence: the agent correctly interpreted the output (counts all 0) as PASS. no
 correctness impact, but the bash tool showed the command as failed.
 
-**status:** recurring pattern. the security scan confirmation for prompt 5 handled this
+status: recurring pattern. the security scan confirmation for prompt 5 handled this
 the same way.
 
 ---
@@ -298,7 +298,7 @@ the same way.
 | UPDATE fix | 660-669 (before), 685-695 (after) | session.call(UPDATE_RENEWAL_FLAG) replaces f-string UPDATE |
 | filter callbacks | 129-183 | log_filter_change_p1 and log_filter_change_p2 functions added; on_change on 5 shared sidebar widgets + page 2 toggle |
 
-**file size:** 706 lines (session start) -> 707 -> 703 -> 728 lines (final)
+file size: 706 lines (session start) -> 707 -> 703 -> 728 lines (final)
 
 ### AGENTS.md / skills / prompts.md changes
 
@@ -308,10 +308,10 @@ none within this session. all governance documents were unchanged.
 
 ## 9. executive summary
 
-- **deployment status:** successful on first attempt. app at CORTEX_DB.CORTEX_SCHEMA.RENEWAL_RADAR.
-- **security fixes:** INSERT_RENEWAL_FLAG and UPDATE_RENEWAL_FLAG stored procedures created; all DML now via session.call(). no f-string INSERT or UPDATE remain.
-- **FILTER_CHANGE logging:** log_filter_change_p1() and log_filter_change_p2() added with on_change callbacks on 5 shared sidebar widgets and the page 2 toggle. verified present in code (grep count: 2). phase 3 verification confirmed 6 genuine FILTER_CHANGE events logged during testing.
-- **flag_id return:** INSERT_RENEWAL_FLAG returns flag_id; shown in st.success("Flag submitted: {flag_id}"). issue 3 from code_review_dashboard.md resolved.
-- **session start gate:** skipped on first attempt; ran after intervention. same root pattern as prior runs, but this is the last run where this occurred - prompts.md was updated before this session (gate instruction added).
-- **scan and deploy mechanism:** still ran as direct bash commands, not via skill invocation. no correctness impact in this run.
-- **open issues:** heatmap segment/channel filter gap and outcome color duplication from code_review_dashboard.md remain open - not addressed in this session (scope was security fixes only).
+- deployment status: successful on first attempt. app at CORTEX_DB.CORTEX_SCHEMA.RENEWAL_RADAR.
+- security fixes: INSERT_RENEWAL_FLAG and UPDATE_RENEWAL_FLAG stored procedures created; all DML now via session.call(). no f-string INSERT or UPDATE remain.
+- FILTER_CHANGE logging: log_filter_change_p1() and log_filter_change_p2() added with on_change callbacks on 5 shared sidebar widgets and the page 2 toggle. verified present in code (grep count: 2). phase 3 verification confirmed 6 genuine FILTER_CHANGE events logged during testing.
+- flag_id return: INSERT_RENEWAL_FLAG returns flag_id; shown in st.success("Flag submitted: {flag_id}"). issue 3 from code_review_dashboard.md resolved.
+- session start gate: skipped on first attempt; ran after intervention. same root pattern as prior runs, but this is the last run where this occurred - prompts.md was updated before this session (gate instruction added).
+- scan and deploy mechanism: still ran as direct bash commands, not via skill invocation. no correctness impact in this run.
+- open issues: heatmap segment/channel filter gap and outcome color duplication from code_review_dashboard.md remain open - not addressed in this session (scope was security fixes only).

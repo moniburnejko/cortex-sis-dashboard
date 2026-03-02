@@ -16,6 +16,9 @@
 
 ## phase 1: infrastructure and data load
 
+took three attempts to get a clean phase 1. the first had skill bypasses and manual checks;
+an intermediate session was stopped mid-DDL after wrong syntax; run 02 was the clean one.
+
 ### runs
 
 | run | date | outcome | key issue |
@@ -46,16 +49,21 @@ objects created:
 
 ### deviations
 
-- run 01: session start gate not invoked in prompt 2 session (no skills before DDL)
-- run 01: `$ prepare-data` bypassed on first attempt; agent ran PUT/COPY INTO as direct bash
-- run 01: acceptance checks run via direct SNOWFLAKE_SQL_EXECUTE instead of `$ sis-dashboard`
-- run 01.5: `CREATE OR REPLACE TABLE` used instead of `CREATE OR ALTER TABLE` - DDL rule violation
-- run 02: sub-skill path resolved from personal skills location; agent recovered via GLOB
-- run 02: agent asked unnecessary phase selection question when phase was explicit in prompt
+in run 01, the session gate was skipped in the prompt 2 session, `$ prepare-data` was
+bypassed on the first attempt (agent ran PUT/COPY INTO directly), and acceptance checks
+ran as direct SQL. run 01.5 was stopped after the agent used `CREATE OR REPLACE TABLE`
+instead of `CREATE OR ALTER TABLE` - a DDL rule violation that would have dropped existing
+data on re-run. run 02 had two minor friction points: sub-skill path resolution failed
+(agent recovered via GLOB), and the agent asked a phase selection question despite the
+phase being explicit in the prompt.
 
 ---
 
 ## phase 2: dashboard build and deploy
+
+phase 2 had the most churn - five runs across two days. the critical issue (SQL injection in
+INSERT and UPDATE) was introduced in run 03 and not caught until an independent code review
+after run 04. run 05 was the first deploy that landed on the first attempt.
 
 ### runs
 
@@ -83,17 +91,22 @@ objects created:
 
 ### deviations
 
-- runs 01-04: session start gate skipped in all sessions (run 05: invoked after mid-plan intervention)
-- runs 02-05: scan and deploy ran as direct bash commands, not via skill invocation
-- runs 02-04: `session.sql(f` parameterization check from build-dashboard skill never executed
-- run 03: SQL injection in INSERT (flag_reason) and UPDATE (review_notes) found post-deploy
-- run 03: FILTER_CHANGE audit logging absent despite AGENTS.md requirement
-- run 04: scope_parts.append bug introduced during display-label refactoring; stale scope values corrected via UPDATE
-- run 04: file placement in wrong directory; snowflake.yml format required correction
+the session gate was skipped across all phase 2 sessions - run 05 being the exception, though
+even there it only ran after a mid-plan intervention. scan and deploy consistently ran as
+direct bash commands across all runs; that's why the `session.sql(f` parameterization check
+from build-dashboard was never executed in any of the five pre-deploy scans. SQL injection
+(flag_reason in INSERT, review_notes in UPDATE) was introduced in run 03 and survived through
+run 04 undetected. run 04 also had a logic bug in scope_parts.append during the display-label
+work, plus initial file placement and snowflake.yml format issues that added deploy cycles.
 
 ---
 
 ## phase 3: verification
+
+two runs. the first passed numerically but on misleading data - the FILTER_CHANGE check
+counted 30 stale events from a prior dashboard version, and the generated acceptance report
+had false claims. run 02 was the first clean verification in the project, and the first time
+the session gate ran automatically without being reminded.
 
 ### runs
 
@@ -137,12 +150,13 @@ phase 3 (write-back):
 
 ### deviations
 
-- run 01: session gate not invoked (no gate instruction in prompt 4 text at that time)
-- run 01: FILTER_CHANGE check passed on 30 stale events from a prior dashboard version; current code had 0 occurrences
-- run 01: ccc_report.md contained false claims ("parameterized sql", "no issues found", wrong criterion names)
-- run 02: all 16 checks ran as direct SNOWFLAKE_SQL_EXECUTE (deploy-and-verify SKILL.md read but mechanism bypassed)
-- run 02: session gate not invoked for prompt 5 (gate instruction not in prompt 5 text)
+run 01's main problem was the FILTER_CHANGE check: it passed on 30 stale events from an older
+dashboard version while the current code had zero occurrences. the generated report
+(ccc_report.md) made things worse by claiming parameterized SQL and no remaining issues -
+both wrong. run 02 was mostly clean: 16/16 on genuine data. the deploy-and-verify skill
+was still bypassed (checks ran as direct SNOWFLAKE_SQL_EXECUTE), and prompt 5 didn't include
+the gate instruction so the gate didn't run for the security scan.
 
 ---
 
-sources: archive/phase_01_run_02.md, archive/phase_02_run_05.md, archive/phase_03_run_02.md
+detailed session logs in archive/.

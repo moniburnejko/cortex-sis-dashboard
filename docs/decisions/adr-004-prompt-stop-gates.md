@@ -18,9 +18,9 @@ without explicit stop conditions, the agent proceeded through phases without wai
 
 ## alternatives considered
 
-- **single large prompt**: agent proceeds through all phases autonomously. rejected: no control; an early-phase bug propagates to the end.
-- **8+ prompts**: one per task. rejected: too granular; context is lost between prompts; management overhead.
-- **prompts without stop conditions**: relying on default agent behavior. rejected: agent does not know when to stop (identified pattern in phase_01_run_01).
+- single large prompt: agent proceeds through all phases autonomously. rejected: no control; an early-phase bug propagates to the end.
+- 8+ prompts: one per task. rejected: too granular; context is lost between prompts; management overhead.
+- prompts without stop conditions: relying on default agent behavior. rejected: agent does not know when to stop (identified pattern in phase_01_run_01).
 
 ## consequences
 

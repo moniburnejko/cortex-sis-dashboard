@@ -13,9 +13,9 @@ a separate sub-skill `secure-dml/SKILL.md`: one file, one responsibility. ddl de
 
 ## alternatives considered
 
-- **inline in AGENTS.md**: easy to find, but the section would become very long; AGENTS.md is a spec, not an implementation reference. rejected: wrong file for ddl content.
-- **inline in build-dashboard**: build-dashboard is a validator/scanner, not a pattern library. mixing scan instructions with ddl creates a confusing single file. rejected: wrong responsibility.
-- **note only in AGENTS.md security rule 7 (no ddl)**: without the ddl the agent must guess the procedure signatures. rejected: guessing leads to mismatched call signatures.
+- inline in AGENTS.md: easy to find, but the section would become very long; AGENTS.md is a spec, not an implementation reference. rejected: wrong file for ddl content.
+- inline in build-dashboard: build-dashboard is a validator/scanner, not a pattern library. mixing scan instructions with ddl creates a confusing single file. rejected: wrong responsibility.
+- note only in AGENTS.md security rule 7 (no ddl): without the ddl the agent must guess the procedure signatures. rejected: guessing leads to mismatched call signatures.
 
 ## consequences
 

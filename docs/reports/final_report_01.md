@@ -4,7 +4,7 @@
 **scope:** phase 1 (run 02), phase 2 (run 04), phase 3 (run 01), code review
 **environment:** CORTEX_DB.CORTEX_SCHEMA, role CORTEX_ADMIN, warehouse CORTEX_WH
 **model:** claude-sonnet-4-5
-**dashboard:** RENEWAL_RADAR (707 lines, 3 pages, deployed at CORTEX_DB.CORTEX_SCHEMA)
+**dashboard:** RENEWAL_RADAR
 
 ---
 
@@ -15,13 +15,14 @@ with an AGENTS.md-driven skill orchestration framework. the project tested wheth
 can follow a structured spec (AGENTS.md), invoke skills in the correct order, and produce a
 production-quality streamlit in snowflake dashboard.
 
-**key outcomes:**
-- dashboard is functional: 3 pages render with data, flag submission and review work, display labels applied
-- all numerical acceptance checks pass (8 phase 1 + 3 phase 2 + 5 phase 3 = 16 total)
+the dashboard works: 3 pages render with data, flag submission and review function, display
+labels are applied. all 16 numerical acceptance checks pass. however:
+
 - 2 critical sql injection vulnerabilities remain in the deployed code
 - 1 required feature (FILTER_CHANGE logging) is missing from the current code
-- skill compliance was partial across all phases: session start gate consistently skipped, scans and deploys executed as direct commands instead of through skills
-- the agent-generated final report (ccc_report.md) contains false claims about security and completeness
+- skill compliance was partial across all phases: session start gate consistently skipped,
+  scans and deploys executed as direct commands instead of through skills
+- the agent-generated final report contains false claims about security and completeness
 
 ---
 
@@ -29,7 +30,7 @@ production-quality streamlit in snowflake dashboard.
 
 ### phase 1: infrastructure and data load (phase_01_run_02.md)
 
-**status:** complete, all 8/8 acceptance checks passed
+complete - all 8/8 acceptance checks passed.
 
 phase 1 established the snowflake infrastructure and loaded source data. executed across 2 prompts
 in 2 separate sessions.
@@ -45,11 +46,11 @@ in 2 separate sessions.
 | `DIM_POLICY` rows | 36,298 |
 | audit log entry for data load | present (2 events) |
 
-**skill compliance:** all 4 mandatory skills invoked correctly in prompt 2. session start gate
-passed in both sessions. `$ prepare-data` executed all 8 steps including gzip compression,
+skill compliance: all 4 mandatory skills invoked correctly in prompt 2. session start gate
+passed in both sessions. `$ prepare-data` executed all 8 steps.
 PUT, COPY INTO, and row count verification.
 
-**deviations found:** 4 total, 2 addressed post-session (stopping point rule tightened,
+deviations found: 4 total, 2 addressed post-session (stopping point rule tightened,
 skill path resolution fixed via renaming sis-streamlit). 2 non-critical (step order variation,
 post-ddl verification queries).
 
@@ -57,10 +58,9 @@ post-ddl verification queries).
 
 ### phase 2: dashboard build and deploy (phase_02_run_04.md)
 
-**status:** dashboard deployed after 5 deploy cycles across 2 sessions
+deployed after 5 deploy cycles across 2 sessions.
 
-phase 2 built the 3-page dashboard from scratch (574 lines), then refined it through bug fixes,
-display-label additions, and scope corrections (final: 707 lines).
+phase 2 built the 3-page dashboard from scratch, then refined it through bug fixes, display-label additions, and scope corrections.
 
 | deliverable | result |
 |---|---|
@@ -73,20 +73,19 @@ display-label additions, and scope corrections (final: 707 lines).
 | display-label layer | 6 mapping dictionaries, all charts/filters/tables use human-readable labels |
 | deploy cycles | 5 total (1 runtime error fix, 1 bug fix, 1 display-label, 1 scope fix, 1 db correction) |
 
-**skill compliance:** partial. `$ sis-streamlit` loaded in both sessions. sub-skills (build-dashboard,
-brand-identity, sis-patterns) read correctly. however:
+skill compliance: partial. `$ sis-streamlit` loaded in both sessions. sub-skills (build-dashboard, brand-identity, sis-patterns) read correctly. however:
 - session start gate not invoked in either session
 - pre-deploy scan ran as direct bash commands (not via skill invocation) in all 5 cycles
 - `session.sql(f` parameterization check never executed in any scan
 - brand-identity not loaded before display-label work
 
-**deviations found:** 7 total. 1 fixed in-session (scope_parts.append bug). 6 remain as open patterns.
+deviations found: 7 total. 1 fixed in-session (scope_parts.append bug). 6 remain as open patterns.
 
 ---
 
 ### phase 3: write-back verification (phase_03_run_01.md)
 
-**status:** all 5 sql checks pass numerically, but with caveats
+all 5 sql checks pass numerically, but with important qualifications.
 
 phase 3 verified flag submission, flag review, and audit logging via 5 sql threshold checks.
 
@@ -98,10 +97,9 @@ phase 3 verified flag submission, flag review, and audit logging via 5 sql thres
 | reviewed flags with reviewed_by | >= 1 | 6 | PASS |
 | FLAG_REVIEWED events in `AUDIT_LOG` | >= 1 | 2 | PASS |
 
-**skill compliance:** `$ sis-dashboard` not invoked. all checks ran manually via SNOWFLAKE_SQL_EXECUTE.
-same bypass pattern as all prior runs.
+skill compliance: `$ sis-dashboard` not invoked. all checks ran manually via SNOWFLAKE_SQL_EXECUTE. same bypass pattern as all prior runs.
 
-**ccc_report.md accuracy:** the agent-generated final report contains multiple errors:
+coco cli report accuracy - the agent-generated final report contains multiple errors:
 - criterion #13 reports wrong name and value (11 total flags instead of 5 open)
 - claims "parameterized sql with whitelist validation" (false)
 - claims "no issues found, no fixes required" (false)
@@ -111,10 +109,7 @@ same bypass pattern as all prior runs.
 
 ### code review: dashboard.py (code_review_dashboard.md)
 
-**status:** 6 issues identified, 0 fixed
-
-independent code review of the final 707-line dashboard.py, performed after the agent declared
-the project complete.
+6 issues identified, 0 fixed at this point.
 
 | # | issue | severity | status |
 |---|---|---|---|
@@ -136,17 +131,17 @@ the project complete.
 ### 3.1 critical issues (require immediate fix before any production use)
 
 #### BUG-001: sql injection in INSERT via flag_reason
-- **source:** code_review_dashboard.md issue 1.1
-- **location:** dashboard.py lines 557-565
-- **description:** `flag_reason` from `st.text_input()` is interpolated directly into an INSERT
+- source: code_review_dashboard.md issue 1.1
+- location: dashboard.py lines 557-565
+- description: `flag_reason` from `st.text_input()` is interpolated directly into an INSERT
   f-string sql statement. a user can type `'); DROP TABLE RENEWAL_FLAGS; --` to execute
   arbitrary sql.
-- **status:** OPEN, not fixed
-- **detected by:** manual code review (not caught by any agent scan)
-- **why it was missed:** the `session.sql(f` parameterization check in build-dashboard SKILL.md
+- status: OPEN, not fixed
+- detected by: manual code review (not caught by any agent scan)
+- why it was missed: the `session.sql(f` parameterization check in build-dashboard SKILL.md
   was never executed during any of the 5 pre-deploy scans. the agent ran its own subset of
   pattern checks but consistently skipped this one.
-- **proposed fix (option A, preferred):** create an `INSERT_RENEWAL_FLAG` stored procedure that
+- proposed fix (option A, preferred): create an `INSERT_RENEWAL_FLAG` stored procedure that
   accepts all values as parameters and performs the INSERT internally. call it via
   `session.call()`:
   ```python
@@ -157,7 +152,7 @@ the project complete.
   st.success(f"Flag submitted: {flag_id}")
   ```
   this also resolves BUG-004 (missing flag_id return).
-- **proposed fix (option B):** use snowpark DataFrame api with `lit()` for all values:
+- proposed fix (option B): use snowpark DataFrame api with `lit()` for all values:
   ```python
   from snowflake.snowpark.functions import lit
   session.table(f"{DATABASE}.{SCHEMA}.RENEWAL_FLAGS").insert([
@@ -165,18 +160,18 @@ the project complete.
       lit(scope_segment), lit(scope_channel), lit(flag_reason)
   ])
   ```
-- **AGENTS.md change needed:** expand security rule 3 to cover INSERT/UPDATE with user text input.
+- AGENTS.md change needed: expand security rule 3 to cover INSERT/UPDATE with user text input.
   current rule only covers IN-list filter validation.
 
 #### BUG-002: sql injection in UPDATE via review_notes
-- **source:** code_review_dashboard.md issue 1.2
-- **location:** dashboard.py lines 660-669
-- **description:** `review_notes` from `st.text_area()` is interpolated directly into an UPDATE
+- source: code_review_dashboard.md issue 1.2
+- location: dashboard.py lines 660-669
+- description: `review_notes` from `st.text_area()` is interpolated directly into an UPDATE
   f-string sql statement. same injection risk as BUG-001.
-- **status:** OPEN, not fixed
-- **detected by:** manual code review
-- **why it was missed:** same root cause as BUG-001
-- **proposed fix (option A, preferred):** create an `UPDATE_RENEWAL_FLAG` stored procedure.
+- status: OPEN, not fixed
+- detected by: manual code review
+- why it was missed: same root cause as BUG-001
+- proposed fix (option A, preferred): create an `UPDATE_RENEWAL_FLAG` stored procedure.
   call via `session.call()`:
   ```python
   session.call(
@@ -184,24 +179,24 @@ the project complete.
       CURRENT_SIS_USER, review_notes, flag_ids_str
   )
   ```
-- **proposed fix (option B):** use parameterized sql via snowpark.
-- **AGENTS.md change needed:** same as BUG-001.
+- proposed fix (option B): use parameterized sql via snowpark.
+- AGENTS.md change needed: same as BUG-001.
 
 ---
 
 ### 3.2 high severity issues (significant functional gap)
 
 #### BUG-003: missing FILTER_CHANGE audit logging
-- **source:** code_review_dashboard.md issue 2, phase_03_run_01.md issue 1
-- **location:** dashboard.py (entire file, 0 occurrences of FILTER_CHANGE)
-- **description:** AGENTS.md requires `log_audit_event("FILTER_CHANGE", ...)` on every sidebar
+- source: code_review_dashboard.md issue 2, phase_03_run_01.md issue 1
+- location: dashboard.py (entire file, 0 occurrences of FILTER_CHANGE)
+- description: AGENTS.md requires `log_audit_event("FILTER_CHANGE", ...)` on every sidebar
   filter change on pages 1 and 2. the current dashboard.py contains zero FILTER_CHANGE logging
   code. the 30 FILTER_CHANGE events in `AUDIT_LOG` exist from a prior dashboard version.
-- **status:** OPEN, not fixed
-- **detected by:** code review + phase 3 analysis
-- **consequence:** if `AUDIT_LOG` were cleared and the current dashboard tested from scratch, the
+- status: OPEN, not fixed
+- detected by: code review + phase 3 analysis
+- consequence: if `AUDIT_LOG` were cleared and the current dashboard tested from scratch, the
   phase 3 check #1 (FILTER_CHANGE >= 1) would FAIL. the numerical pass is based on stale data.
-- **proposed fix:** add `on_change` callbacks to all sidebar multiselect and date_input widgets:
+- proposed fix: add `on_change` callbacks to all sidebar multiselect and date_input widgets:
   ```python
   def on_filter_change():
       log_audit_event("FILTER_CHANGE", "USER_INTERACTION", current_page,
@@ -213,8 +208,8 @@ the project complete.
       on_change=on_filter_change
   )
   ```
-- **note:** `on_change` in sis requires careful testing to avoid spurious logging on first render.
-- **AGENTS.md change needed:** add FILTER_CHANGE as a mandatory pattern check in build-dashboard
+- note: `on_change` in sis requires careful testing to avoid spurious logging on first render.
+- AGENTS.md change needed: add FILTER_CHANGE as a mandatory pattern check in build-dashboard
   scan mode: `grep -c "FILTER_CHANGE" <file>` must be >= 1.
 
 ---
@@ -222,27 +217,27 @@ the project complete.
 ### 3.3 medium severity issues (functional gaps, not security-critical)
 
 #### BUG-004: missing flag_id in st.success after flag submission
-- **source:** code_review_dashboard.md issue 3
-- **location:** dashboard.py line 570
-- **description:** AGENTS.md line 673 requires "show st.success() with the returned flag_id."
+- source: code_review_dashboard.md issue 3
+- location: dashboard.py line 570
+- description: AGENTS.md line 673 requires "show st.success() with the returned flag_id."
   the current code shows scope instead: `st.success(f"Flag submitted successfully: {scope}")`.
   the INSERT does not return the generated uuid.
-- **status:** OPEN, not fixed
-- **detected by:** manual code review
-- **proposed fix:** resolved together with BUG-001 if using stored procedure approach (option A).
+- status: OPEN, not fixed
+- detected by: manual code review
+- proposed fix: resolved together with BUG-001 if using stored procedure approach (option A).
   the procedure returns the flag_id which is then displayed in st.success.
-- **AGENTS.md change needed:** clarify the flag_id return mechanism (currently spec says "returned
+- AGENTS.md change needed: clarify the flag_id return mechanism (currently spec says "returned
   flag_id" but does not specify how to obtain it from INSERT).
 
 #### BUG-005: heatmap ignores segment and channel filters
-- **source:** code_review_dashboard.md issue 4
-- **location:** dashboard.py lines 455-476 (load_heatmap_data function)
-- **description:** the heatmap data loader accepts `segments` and `channels` parameters but only
+- source: code_review_dashboard.md issue 4
+- location: dashboard.py lines 455-476 (load_heatmap_data function)
+- description: the heatmap data loader accepts `segments` and `channels` parameters but only
   applies region filtering after pandas conversion. segment and channel sidebar selections are
   ignored for the heatmap visualization.
-- **status:** OPEN, not fixed
-- **detected by:** manual code review
-- **proposed fix:** add pandas filtering for segment and channel:
+- status: OPEN, not fixed
+- detected by: manual code review
+- proposed fix: add pandas filtering for segment and channel:
   ```python
   df = df[
       (df['region'].isin(regions)) &
@@ -250,7 +245,7 @@ the project complete.
       (df['channel'].isin(channels))
   ]
   ```
-- **AGENTS.md change needed:** add explicit note to page 2 heatmap spec that all sidebar filters
+- AGENTS.md change needed: add explicit note to page 2 heatmap spec that all sidebar filters
   must apply.
 
 ---
@@ -258,45 +253,45 @@ the project complete.
 ### 3.4 low severity issues (visual, style, minor inconsistencies)
 
 #### BUG-006: LAPSED and NOT_TAKEN_UP share same color
-- **source:** code_review_dashboard.md issue 5
-- **location:** dashboard.py lines 293-295
-- **description:** the outcome color scale maps both LAPSED and NOT_TAKEN_UP to #FFA726 (accent
+- source: code_review_dashboard.md issue 5
+- location: dashboard.py lines 293-295
+- description: the outcome color scale maps both LAPSED and NOT_TAKEN_UP to #FFA726 (accent
   orange), making them visually indistinguishable in stacked bar charts.
-- **status:** OPEN, not fixed
-- **detected by:** manual code review
-- **proposed fix:** differentiate with a darker accent shade:
+- status: OPEN, not fixed
+- detected by: manual code review
+- proposed fix: differentiate with a darker accent shade:
   ```python
   range=["#1565C0", "#FFA726", "#FB8C00", "#E53935"]
   ```
-- **brand-identity change needed:** add explicit outcome color mapping to skill file.
+- brand-identity change needed: add explicit outcome color mapping to skill file.
 
 #### BUG-007: CURRENT_SIS_USER in f-string sql
-- **source:** code_review_dashboard.md issue 1.3
-- **location:** dashboard.py lines 560, 663, 667
-- **description:** `CURRENT_SIS_USER` (from `st.user.user_name`) is interpolated directly into
+- source: code_review_dashboard.md issue 1.3
+- location: dashboard.py lines 560, 663, 667
+- description: `CURRENT_SIS_USER` (from `st.user.user_name`) is interpolated directly into
   f-string sql. this is a system value (not user-editable), so practical injection risk is low.
   however, it violates parameterized sql best practices.
-- **status:** OPEN
-- **proposed fix:** resolved together with BUG-001/BUG-002 if using stored procedure approach.
+- status: OPEN
+- proposed fix: resolved together with BUG-001/BUG-002 if using stored procedure approach.
 
 #### BUG-008: whitelist-validated filter values in f-string sql
-- **source:** code_review_dashboard.md issue 1.4
-- **location:** dashboard.py lines 232-236, 418-422
-- **description:** filter values (regions, segments, channels) are whitelist-validated but still
+- source: code_review_dashboard.md issue 1.4
+- location: dashboard.py lines 232-236, 418-422
+- description: filter values (regions, segments, channels) are whitelist-validated but still
   interpolated via f-string `.join()` into sql. AGENTS.md security rule 3 specifies snowpark
   DataFrame api (`session.table().filter(col().isin())`), not f-string sql.
-- **status:** OPEN
-- **proposed fix:** rewrite to snowpark DataFrame api, or document as accepted exception for
+- status: OPEN
+- proposed fix: rewrite to snowpark DataFrame api, or document as accepted exception for
   aggregate queries with DATE_TRUNC.
 
 #### BUG-009: module-level session vs sis-patterns contradiction
-- **source:** code_review_dashboard.md issue 6
-- **location:** dashboard.py line 12, sis-patterns SKILL.md section 1, build-dashboard scaffold
-- **description:** build-dashboard scaffold places `session = get_active_session()` at module level.
+- source: code_review_dashboard.md issue 6
+- location: dashboard.py line 12, sis-patterns SKILL.md section 1, build-dashboard scaffold
+- description: build-dashboard scaffold places `session = get_active_session()` at module level.
   sis-patterns says "inside functions only." both are loaded before code generation, creating
   a contradiction.
-- **status:** OPEN (informational)
-- **proposed fix (recommended):** update sis-patterns to clarify: module-level is acceptable for
+- status: OPEN (informational)
+- proposed fix (recommended): update sis-patterns to clarify: module-level is acceptable for
   non-cached code; `@st.cache_data` functions must call `get_active_session()` inside the function.
 
 ---
@@ -334,32 +329,31 @@ these issues were detected and resolved during the phase 1-3 execution sessions.
 
 ### 4.2 recurring patterns across all runs
 
-1. **session start gate consistently skipped in phase 2+:** the agent treated memory validation
+1. session start gate consistently skipped in phase 2+: the agent treated memory validation
    or direct sql context checks as equivalent to the mandatory skill invocation. the gate was
    only reliably followed in phase 1 after explicit prompt engineering.
 
-2. **scan and deploy as direct commands:** the agent reads skill SKILL.md files but executes
+2. scan and deploy as direct commands: the agent reads skill SKILL.md files but executes
    steps as direct bash commands rather than through skill orchestration. this causes selective
-   step execution, with `session.sql(f` check consistently missed.
+   step execution, with the `session.sql(f` check consistently missed.
 
-3. **prompt wording drives compliance more than AGENTS.md mandates:** when the prompt explicitly
+3. prompt wording drives compliance more than AGENTS.md mandates: when the prompt explicitly
    names a skill (e.g. "use $ sis-dashboard"), the agent invokes it. when the prompt does not
    name the skill, the agent bypasses it even when AGENTS.md mandates it.
 
-4. **agent self-verification is insufficient:** the agent's own pre-deploy scans missed sql
-   injection, and the final report (ccc_report.md) contained false claims. the agent does not
-   reliably detect its own errors.
+4. agent self-verification is insufficient: the agent's own pre-deploy scans missed sql
+   injection, and the final report contained false claims. the agent does not reliably detect its own errors.
 
-5. **agent introduces bugs during refactoring:** the scope_parts.append error was introduced by
-   the agent during the display-label implementation. pattern-based scans do not catch logic errors.
+5. agent introduces bugs during refactoring: the scope_parts.append error was introduced during
+   the display-label implementation. pattern-based scans do not catch logic errors.
 
 ---
 
-## 5. ccc_report.md assessment
+## 5. coco cli final report (ccc_report.md) accuracy assessment
 
-the agent-generated final report (ccc_report.md) has the following accuracy issues:
+the agent-generated final report has the following accuracy issues:
 
-| claim in ccc_report.md | reality | severity |
+| claim in report | reality | severity |
 |---|---|---|
 | "Parameterized sql with whitelist validation" | sql injection exists in INSERT and UPDATE with user text input | critical misrepresentation |
 | "No issues found. No fixes required." | 5+ issues exist including 2 critical sql injections | critical misrepresentation |
@@ -367,8 +361,7 @@ the agent-generated final report (ccc_report.md) has the following accuracy issu
 | FILTER_CHANGE: 30 events, PASS | events are stale from prior version; current code has 0 FILTER_CHANGE logging | misleading |
 | "Zero forbidden patterns" | session.sql(f check was never run | incomplete assessment |
 
-**conclusion:** ccc_report.md should NOT be used as a production readiness assessment. it reflects
-numerical threshold checks only, not code quality or security posture.
+ccc_report.md should not be used as a production readiness assessment. it reflects numerical threshold checks only, not code quality or security posture.
 
 ---
 
@@ -376,7 +369,7 @@ numerical threshold checks only, not code quality or security posture.
 
 ### 6.1 critical: fix sql injection vulnerabilities (BUG-001, BUG-002)
 
-**priority:** immediate, before any further use of the dashboard
+priority: immediate, before any further use of the dashboard.
 
 1. create `INSERT_RENEWAL_FLAG` stored procedure in snowflake that accepts all flag fields as
    parameters and returns the generated flag_id uuid
@@ -398,8 +391,8 @@ numerical threshold checks only, not code quality or security posture.
 
 ### 6.3 medium: fix remaining functional issues (BUG-004, BUG-005)
 
-1. **flag_id return** - resolved by 6.1 if using stored procedure approach
-2. **heatmap filter gap** - add segment and channel pandas filtering in load_heatmap_data
+1. flag_id return - resolved by 6.1 if using stored procedure approach
+2. heatmap filter gap - add segment and channel pandas filtering in load_heatmap_data
 3. redeploy and verify all 3 pages still render correctly
 
 ### 6.4 low: visual and style fixes (BUG-006, BUG-008, BUG-009)
@@ -423,47 +416,51 @@ potentially the semantic model layer. next steps:
 
 ### 6.6 governance and process improvements
 
-1. **commit dashboard.py after each successful deploy** - enables git diff verification for
+1. commit dashboard.py after each successful deploy - enables git diff verification for
    subsequent changes. the agent's inability to verify changes (phase_02_run_04.md deviation 5)
    was caused by the file being untracked.
-2. **add post-deployment code review prompt** (prompts.md prompt 5) - runs full build-dashboard
+2. add post-deployment code review prompt (prompts.md prompt 5) - runs full build-dashboard
    scan after all edits are complete, catching issues introduced during incremental refinement.
-3. **update AGENTS.md memory validation protocol** - change from binary "resume or start fresh"
+3. update AGENTS.md memory validation protocol - change from binary "resume or start fresh"
    to the 3-option pattern (resume / re-run checks / reload) that the agent naturally produced
    in phase 1.
-4. **clarify skill invocation syntax** - add note to AGENTS.md that `->` is conceptual routing
+4. clarify skill invocation syntax - add note to AGENTS.md that `->` is conceptual routing
    notation, not a compound command. the agent confused this in phase 2 session 2.
-5. **regenerate ccc_report.md** - the current version contains false claims and should be
-   replaced with an accurate report after all critical fixes are applied.
 
-### 6.7 suggested execution order
+### 6.7 execution order
 
-```
-1. [critical]  fix sql injection (BUG-001, BUG-002) + flag_id return (BUG-004)
-2. [critical]  redeploy and verify
-3. [high]      implement FILTER_CHANGE logging (BUG-003)
-4. [high]      redeploy and verify phase 3 check passes with fresh events
-5. [medium]    fix heatmap filter gap (BUG-005)
-6. [medium]    redeploy and full regression test
-7. [low]       visual/style fixes (BUG-006, BUG-008, BUG-009)
-8. [process]   commit dashboard.py to git
-9. [process]   update AGENTS.md (security rule 3, FILTER_CHANGE, flag_id, heatmap)
-10. [process]  update skills (build-dashboard scan, sis-patterns, brand-identity)
-11. [test]     review and test agents-md-semantic-model branch
-12. [test]     run fresh phase 2 build with updated AGENTS.md, compare agent behavior
-13. [process]  regenerate ccc_report.md with accurate findings
-```
+1. fix sql injection (BUG-001, BUG-002) + flag_id return (BUG-004)
+2. redeploy and verify
+3. implement FILTER_CHANGE logging (BUG-003)
+4. redeploy and verify phase 3 check passes with fresh events
+5. fix heatmap filter gap (BUG-005)
+6. redeploy and full regression test
+7. visual/style fixes (BUG-006, BUG-008, BUG-009)
+8. commit dashboard.py to git
+9. update AGENTS.md (security rule 3, FILTER_CHANGE, flag_id, heatmap)
+10. update skills (build-dashboard scan, sis-patterns, brand-identity)
+11. review and test agents-md-semantic-model branch
+12. run fresh phase 2 build with updated AGENTS.md, compare agent behavior
 
 ---
 
 ## 7. appendix: source reports
 
-consolidated reports (current):
+consolidated reports:
 
-| report | file | covers |
-|---|---|---|
-| execution history | docs/reports/execution.md | all runs across 3 phases; done criteria; deviations |
-| code review | docs/reports/code_review.md | both dashboard.py reviews (707 and 728 lines); resolution tracking |
-| lessons learned | docs/reports/lessons_learned.md | skill compliance cross-phase; deviation categories; governance changes |
+- execution history
+  - docs/reports/execution.md
+  - all runs across 3 phases
+  - done criteria 
+  - deviations
 
-detailed session logs available in archive/ (project root). files retained under original names for adr cross-references.
+- code review
+  - docs/reports/code_review.md
+
+- lessons learned
+  - docs/reports/lessons_learned.md
+  - skill compliance cross-phase
+  - deviation categories
+  - governance changes
+
+detailed session logs available in archive/.

@@ -10,16 +10,16 @@ the build-dashboard scaffold placed `session = get_active_session()` at module l
 ## decision
 
 clear rule with two cases:
-- **module-level session is OK** for non-cached code: the main module, routing logic, audit logger initialization. the scaffold template is correct.
-- **inside `@st.cache_data` functions: MANDATORY `get_active_session()` inside the function body.** a module-level session is not accessible in the cached execution context and will raise a `SnowflakeConnectionError`.
+- module-level session is OK for non-cached code: the main module, routing logic, audit logger initialization. the scaffold template is correct.
+- inside `@st.cache_data` functions: `get_active_session()` must be called inside the function body. a module-level session is not accessible in the cached execution context and will raise a `SnowflakeConnectionError`.
 
 sis-patterns/SKILL.md updated with an explicit table documenting both cases and the reason for the distinction.
 
 ## alternatives considered
 
-- **always inside functions**: the safest approach and eliminates the contradiction, but verbose; the scaffold template would need to change. rejected: unnecessary churn; scaffold is correct for its use case.
-- **always module-level**: simpler, but crashes inside `@st.cache_data`. rejected: breaks caching.
-- **remove `@st.cache_data` from data-fetching functions**: eliminates the problem but at the cost of performance (no caching). rejected: caching is important for sis performance.
+- always inside functions: the safest approach and eliminates the contradiction, but verbose; the scaffold template would need to change. rejected: unnecessary churn; scaffold is correct for its use case.
+- always module-level: simpler, but crashes inside `@st.cache_data`. rejected: breaks caching.
+- remove `@st.cache_data` from data-fetching functions: eliminates the problem but at the cost of performance (no caching). rejected: caching is important for sis performance.
 
 ## consequences
 

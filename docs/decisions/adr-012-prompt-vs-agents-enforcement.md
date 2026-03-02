@@ -29,10 +29,10 @@ this makes the gate an explicit task in the active prompt - same priority as "bu
 
 ## alternatives considered
 
-- **stronger constraint language in AGENTS.md**: already tried (adr-005 - added STOP and bold warnings). not effective. the agent reads the constraint and understands it but does not self-enforce when the prompt does not reference it.
-- **session hooks in cortex code cli**: would allow pre-session validation at the runtime level, not instruction level. not available in current cortex code cli.
-- **rely on user to catch and remind**: current fallback. requires the user to monitor every session start. fragile - increases cognitive load and defeats the purpose of automation.
-- **remove the gate entirely**: rejected. the gate catches environment drift (wrong role, wrong warehouse, missing permissions) that would cause errors later in the session.
+- stronger constraint language in AGENTS.md: already tried (adr-005 - added STOP and bold warnings). not effective. the agent reads the constraint and understands it but does not self-enforce when the prompt does not reference it.
+- session hooks in cortex code cli: would allow pre-session validation at the runtime level, not instruction level. not available in current cortex code cli.
+- rely on user to catch and remind: current fallback. requires the user to monitor every session start. fragile - increases cognitive load and defeats the purpose of automation.
+- remove the gate entirely: rejected. the gate catches environment drift (wrong role, wrong warehouse, missing permissions) that would cause errors later in the session.
 
 ## consequences
 

@@ -1,6 +1,8 @@
-# lessons learned: renewal radar sis dashboard
+# lessons learned
 
 ## skill compliance: cross-phase
+
+the pattern is consistent: skills get invoked when the prompt explicitly names them, and bypassed when it doesn't - regardless of what AGENTS.md mandates.
 
 | skill | phase 1 | phase 2 | phase 3 | pattern |
 |---|---|---|---|---|
@@ -17,7 +19,7 @@ consequence of build-dashboard bypass: `session.sql(f` parameterization check ne
 
 ## deviations by category
 
-### session start gate - 5x skipped across project
+### session gate: skipped consistently
 
 pattern: agent treated memory validation or prior context knowledge as equivalent to mandatory skill invocation.
 
@@ -32,7 +34,7 @@ what fixed it: adding explicit "invoke $ check-local-environment, then $ check-s
 
 governance response: adr-012, adr-013; gate instruction added to all prompts 1-4 in prompts.md.
 
-### skill bypass - all phases
+### skill bypass: a fundamental mechanism limitation
 
 pattern: agent reads SKILL.md content then executes steps as direct bash/SQL commands rather than through skill invocation. this is the fundamental mechanism limitation.
 
@@ -44,7 +46,7 @@ affected skills and consequences:
 
 mitigation: naming the skill explicitly in the prompt forces invocation. AGENTS.md mandates alone are insufficient.
 
-### sql injection - found by code review, not agent scans
+### sql injection: survived 5 pre-deploy scans undetected
 
 source: phase_02_run_03 introduced f-string INSERT and UPDATE with user text input. ran through 5 pre-deploy scans in runs 03 and 04 without detection.
 
@@ -56,7 +58,7 @@ fix: INSERT_RENEWAL_FLAG and UPDATE_RENEWAL_FLAG stored procedures created in ph
 
 governance response: adr-007, adr-008 (secure-dml skill); security rule 3 in AGENTS.md expanded; DML injection check added to build-dashboard scan mode.
 
-### deployment cycles - snowflake.yml and file placement
+### deployment cycles: config and file placement errors
 
 phase_02_run_02 required multiple deploy cycles due to:
 - dashboard.py initially placed in wrong subdirectory
@@ -69,6 +71,8 @@ phase_02_run_05 deployed on first attempt - only run to do so. context: scope wa
 ---
 
 ## governance changes made
+
+every major deviation from this project fed back into a governance change - mostly to prompts.md, AGENTS.md, or the skill files. the table maps problems to decisions.
 
 | problem | adr | change |
 |---|---|---|
@@ -86,4 +90,4 @@ phase_02_run_05 deployed on first attempt - only run to do so. context: scope wa
 
 ---
 
-sources: deviations and skill compliance sections from all archive/ reports
+pattern analysis drawn from all session reports in archive/.

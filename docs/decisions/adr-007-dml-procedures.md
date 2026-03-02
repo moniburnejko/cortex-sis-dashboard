@@ -27,9 +27,9 @@ procedures created in phase 1 alongside `LOG_AUDIT_EVENT`. values passed as para
 
 ## alternatives considered
 
-- **snowpark DataFrame api with `lit()`**: `session.table('RENEWAL_FLAGS').filter(...).update({'review_notes': lit(review_notes)})`. correct with respect to injection, but does not return flag_id (BUG-004 problem). rejected: loss of return value.
-- **parameterized `session.sql()` with `?` placeholders**: `session.sql("INSERT ... VALUES (?)", [flag_reason])`. not supported by the snowpark python api in this form (no native bind parameters for session.sql). rejected: not available.
-- **input sanitization before f-string**: `flag_reason.replace("'", "''")`. defence-in-depth but does not eliminate the threat; still an f-string. rejected: incomplete protection.
+- snowpark DataFrame api with `lit()`: `session.table('RENEWAL_FLAGS').filter(...).update({'review_notes': lit(review_notes)})`. correct with respect to injection, but does not return flag_id (BUG-004 problem). rejected: loss of return value.
+- parameterized `session.sql()` with `?` placeholders: `session.sql("INSERT ... VALUES (?)", [flag_reason])`. not supported by the snowpark python api in this form (no native bind parameters for session.sql). rejected: not available.
+- input sanitization before f-string: `flag_reason.replace("'", "''")`. defence-in-depth but does not eliminate the threat; still an f-string. rejected: incomplete protection.
 
 ## consequences
 

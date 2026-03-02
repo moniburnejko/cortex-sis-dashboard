@@ -13,9 +13,9 @@ AGENTS.md session start gate reinforced with an explicit STOP and a note: "manua
 
 ## alternatives considered
 
-- **remove the gate**: agent skips environment checks before starting. rejected: loss of governance; environment errors are only discovered mid-phase (harder to fix).
-- **change gate to an optional WARN**: agent logs a warning but does not stop. rejected: too weak; the pattern showed the agent ignores warnings.
-- **inline sql check instead of a skill**: `SELECT CURRENT_ROLE(), CURRENT_WAREHOUSE()` in the prompt. rejected: this is exactly the problem, partial validation instead of the full check.
+- remove the gate: agent skips environment checks before starting. rejected: loss of governance; environment errors are only discovered mid-phase (harder to fix).
+- change gate to an optional warn: agent logs a warning but does not stop. rejected: too weak; the pattern showed the agent ignores warnings.
+- inline sql check instead of a skill: `SELECT CURRENT_ROLE(), CURRENT_WAREHOUSE()` in the prompt. rejected: this is exactly the problem, partial validation instead of the full check.
 
 ## consequences
 

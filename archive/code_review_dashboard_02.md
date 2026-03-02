@@ -44,7 +44,7 @@ implemented, and identifies any remaining or new issues.
 
 ### 3.1 dml injection (critical - resolved)
 
-**prior state (707-line version):**
+prior state (707-line version):
 
 ```python
 # lines 557-565 (INSERT with f-string user text)
@@ -65,7 +65,7 @@ session.sql(f"""
 `flag_reason` and `review_notes` were user-supplied text input (st.text_input, st.text_area)
 interpolated directly into sql - a sql injection vulnerability.
 
-**fix applied in phase_02_run_05:**
+fix applied in phase_02_run_05:
 
 stored procedures INSERT_RENEWAL_FLAG and UPDATE_RENEWAL_FLAG created in snowflake.
 dashboard.py updated to use session.call():
@@ -85,7 +85,7 @@ session.call(
 )
 ```
 
-**verification:**
+verification:
 
 ```
 grep -n "session\.sql(f" dashboard.py | grep -iE "INSERT|UPDATE"
@@ -93,17 +93,17 @@ grep -n "session\.sql(f" dashboard.py | grep -iE "INSERT|UPDATE"
 
 result: 0 matches. no f-string DML remains.
 
-**status:** resolved. all DML with user text now via session.call().
+status: resolved. all DML with user text now via session.call().
 
 ### 3.2 FILTER_CHANGE audit callbacks (high - resolved)
 
-**prior state (707-line version):**
+prior state (707-line version):
 
 zero occurrences of FILTER_CHANGE in dashboard.py. the 30 FILTER_CHANGE events in
 AUDIT_LOG at the time of code_review_dashboard.md were stale events from a prior
 dashboard version.
 
-**fix applied in phase_02_run_05:**
+fix applied in phase_02_run_05:
 
 two callback functions added at lines 129-137:
 
@@ -134,7 +134,7 @@ callbacks attached via on_change parameter:
 the page-routing logic (lines 146-151) sets `filter_callback` to the correct function
 based on the active page, or None for the Activity Log page (no filter logging required).
 
-**verification:**
+verification:
 
 ```
 grep -c "FILTER_CHANGE" dashboard.py  ->  2
@@ -143,11 +143,11 @@ grep -c "FILTER_CHANGE" dashboard.py  ->  2
 phase_03_run_02 confirmed 6 genuine FILTER_CHANGE events logged during testing (scoped
 to last hour).
 
-**status:** resolved. FILTER_CHANGE logging present and functional.
+status: resolved. FILTER_CHANGE logging present and functional.
 
 ### 3.3 flag_id return (medium - resolved)
 
-**prior state (707-line version):**
+prior state (707-line version):
 
 ```python
 # line 570 (prior)
@@ -156,7 +156,7 @@ st.success(f"Flag submitted successfully: {scope}")
 
 the INSERT did not return the flag_id. st.success showed the scope type string instead.
 
-**fix applied in phase_02_run_05:**
+fix applied in phase_02_run_05:
 
 INSERT_RENEWAL_FLAG stored procedure returns the generated uuid. session.call() captures
 the return value:
@@ -171,7 +171,7 @@ flag_id = session.call(
 st.success(f"Flag submitted: {flag_id}")
 ```
 
-**status:** resolved. flag_id displayed in confirmation message.
+status: resolved. flag_id displayed in confirmation message.
 
 ---
 
@@ -179,9 +179,9 @@ st.success(f"Flag submitted: {flag_id}")
 
 ### 4.1 heatmap segment/channel filter gap (medium - open)
 
-**location:** `load_heatmap_data` function, lines 480-501
+location: `load_heatmap_data` function, lines 480-501
 
-**issue:** the function accepts `segments` and `channels` parameters but neither the
+issue: the function accepts `segments` and `channels` parameters but neither the
 sql query nor the post-fetch pandas filter applies them. only `region` is filtered:
 
 ```python
@@ -206,14 +206,14 @@ def load_heatmap_data(regions, segments, channels, date_from, date_to, final_onl
 the sql WHERE clause has no segment or channel condition. the pandas filter at line 500
 applies only region. date_from and date_to are also not applied.
 
-**AGENTS.md spec:** page 2 heatmap should respect all sidebar filters (region, segment,
+AGENTS.md spec: page 2 heatmap should respect all sidebar filters (region, segment,
 channel, date range).
 
-**impact:** sidebar segment and channel selections (and date range) have no effect on
+impact: sidebar segment and channel selections (and date range) have no effect on
 heatmap data. the heatmap always shows all segments, channels, and date ranges filtered
 only by region and optionally by is_final_offer.
 
-**fix:**
+fix:
 
 ```python
 # replace line 500 with:
@@ -229,11 +229,11 @@ df = df[
 note: FACT_PREMIUM_EVENT has segment and channel columns, so the pandas filter will work.
 date filtering requires adding the date column to the select or applying it in the sql query.
 
-**status:** open. not addressed in phase_02_run_05 (scope was security fixes only).
+status: open. not addressed in phase_02_run_05 (scope was security fixes only).
 
 ### 4.2 outcome color duplication (low - open)
 
-**location:** alt.Scale range parameter, line 319
+location: alt.Scale range parameter, line 319
 
 ```python
 # line 317-320
@@ -255,10 +255,10 @@ color mapping:
 Lapsed and Not taken up are visually indistinguishable in the stacked bar chart
 (chart 3 on page 1 "Renewal outcome distribution by segment").
 
-**impact:** users cannot distinguish Lapsed from Not taken up in the outcome distribution
+impact: users cannot distinguish Lapsed from Not taken up in the outcome distribution
 chart. both outcomes use the same orange color.
 
-**fix:**
+fix:
 
 ```python
 range=["#1565C0", "#FFA726", "#FB8C00", "#E53935"]
@@ -266,11 +266,11 @@ range=["#1565C0", "#FFA726", "#FB8C00", "#E53935"]
 
 or assign a distinct color from brand-identity to Not taken up.
 
-**status:** open. not addressed in phase_02_run_05.
+status: open. not addressed in phase_02_run_05.
 
 ### 4.3 module-level session (informational)
 
-**location:** line 12
+location: line 12
 
 ```python
 session = get_active_session()
@@ -291,19 +291,19 @@ the module-level session is used by:
 cached data loader functions (load_filter_options, load_kpi_data, etc.) correctly call
 `get_active_session()` inside the function, consistent with sis-patterns.
 
-**impact:** low. works in sis warehouse runtime (module re-executes on each user
+impact: low. works in sis warehouse runtime (module re-executes on each user
 interaction). inconsistency between cached and non-cached code - mixed pattern.
 
-**recommendation:** resolve the sis-patterns vs build-dashboard contradiction. preferred
+recommendation: resolve the sis-patterns vs build-dashboard contradiction. preferred
 resolution: update sis-patterns to clarify that module-level session is acceptable for
 non-cached code; cached functions must call get_active_session() inside the function
 because the module-level reference is not picklable.
 
-**status:** informational - same as code_review_dashboard.md issue 6. unchanged.
+status: informational - same as code_review_dashboard.md issue 6. unchanged.
 
 ### 4.4 f-string SELECT with constants (informational - accepted)
 
-**location:** lines 606-614, 631-637, 703-710
+location: lines 606-614, 631-637, 703-710
 
 ```python
 # line 606
@@ -321,7 +321,7 @@ interpolates only DATABASE and SCHEMA constants.
 the build-dashboard skill spec explicitly allows this pattern (constants-only f-string SQL).
 the post-deployment scan (phase_03_run_02) confirmed all three as safe.
 
-**status:** accepted per skill spec. not a vulnerability.
+status: accepted per skill spec. not a vulnerability.
 
 ---
 

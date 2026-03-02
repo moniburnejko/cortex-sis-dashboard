@@ -55,7 +55,7 @@ this would produce valid sql that drops the table. the scope_region, scope_segme
 scope_channel values are constrained by selectbox options (whitelist-safe), but flag_reason
 is free-form text with no sanitization.
 
-**fix:** use `session.call()` with a stored procedure, or use snowpark DataFrame api:
+fix: use `session.call()` with a stored procedure, or use snowpark DataFrame api:
 
 ```python
 from snowflake.snowpark.functions import lit, current_timestamp
@@ -94,7 +94,7 @@ session.sql(f"""
 risk as 1.1. additionally, `flag_ids_str` is built from `"','".join(flag_ids)` where
 flag_ids come from the data_editor, but the values originate from the database - lower risk.
 
-**fix:** same approach as 1.1 - use session.call() with a stored procedure for the UPDATE.
+fix: same approach as 1.1 - use session.call() with a stored procedure for the UPDATE.
 
 ### 1.3 low: CURRENT_SIS_USER in sql (lines 560, 663, 667)
 
@@ -128,7 +128,7 @@ df = session.table(...).filter(col("region").isin(selected))
 the spec requires snowpark DataFrame api (`session.table().filter()`), not f-string sql.
 the agent used f-string sql with whitelist validation instead.
 
-**fix:** rewrite load_trend_data and load_outcome_premium_data to use snowpark DataFrame api
+fix: rewrite load_trend_data and load_outcome_premium_data to use snowpark DataFrame api
 with DATE_TRUNC applied via snowpark functions, or keep the current approach and document
 the exception in AGENTS.md (whitelist-validated f-string sql for aggregate queries with
 DATE_TRUNC, which has no snowpark equivalent).
@@ -148,19 +148,19 @@ widget constrains values to valid dates within min/max bounds.
 
 ## 2. missing FILTER_CHANGE audit logging
 
-**AGENTS.md requirement (line 634):**
+AGENTS.md requirement (line 634):
 ```
 audit: on filter change -> log_audit_event("FILTER_CHANGE", "USER_INTERACTION",
 "page_1_kpi_overview", "sidebar_filters", "multiselect_change")
 ```
 
-**AGENTS.md requirement (line 675):**
+AGENTS.md requirement (line 675):
 ```
 audit: on filter change -> log_audit_event("FILTER_CHANGE", "USER_INTERACTION",
 "page_2_premium_pressure", "sidebar_filters", "multiselect_change")
 ```
 
-**dashboard.py:** zero occurrences of `FILTER_CHANGE` in the code.
+dashboard.py: zero occurrences of `FILTER_CHANGE` in the code.
 
 ```
 grep -c "FILTER_CHANGE" dashboard.py  ->  0
@@ -170,7 +170,7 @@ the dashboard only logs two event types:
 - `FLAG_ADDED` (line 567)
 - `FLAG_REVIEWED` (line 671)
 
-**impact on verification:** phase 3 done criteria (AGENTS.md line 783) checks:
+impact on verification: phase 3 done criteria (AGENTS.md line 783) checks:
 ```sql
 SELECT COUNT(*) FROM AUDIT_LOG WHERE action_type='FILTER_CHANGE';  -- >= 1
 ```
@@ -179,7 +179,7 @@ the agent's final verification reported 30 FILTER_CHANGE events. these exist fro
 dashboard version that DID have filter logging (likely from run_03 or run_04). the current
 dashboard.py does not produce them. if `AUDIT_LOG` were cleared, this check would fail.
 
-**fix:** add `on_change` callbacks to the sidebar multiselect and date_input widgets:
+fix: add `on_change` callbacks to the sidebar multiselect and date_input widgets:
 
 ```python
 def on_filter_change():
@@ -197,7 +197,7 @@ note: `on_change` requires careful implementation in sis to avoid spurious loggi
 render. the session state initialization with actual defaults (lines 117-126) should prevent
 this, but testing is required.
 
-**AGENTS.md change:** add FILTER_CHANGE logging to the mandatory scan checklist in
+AGENTS.md change: add FILTER_CHANGE logging to the mandatory scan checklist in
 build-dashboard SKILL.md (scan mode). add a pattern check:
 ```
 grep -c "FILTER_CHANGE" <file>  -- must be >= 1
@@ -207,12 +207,12 @@ grep -c "FILTER_CHANGE" <file>  -- must be >= 1
 
 ## 3. missing flag_id in st.success
 
-**AGENTS.md requirement (line 673):**
+AGENTS.md requirement (line 673):
 ```
 show st.success() with the returned flag_id
 ```
 
-**dashboard.py line 570:**
+dashboard.py line 570:
 ```python
 st.success(f"Flag submitted successfully: {scope}")
 ```
@@ -220,7 +220,7 @@ st.success(f"Flag submitted successfully: {scope}")
 the INSERT statement (lines 557-565) does not return the generated flag_id uuid.
 st.success shows the scope (e.g. "REGION_SEGMENT") instead of the flag_id.
 
-**fix option 1:** query the last inserted flag_id after INSERT:
+fix option 1: query the last inserted flag_id after INSERT:
 ```python
 result = session.sql(f"""
     SELECT flag_id FROM {DATABASE}.{SCHEMA}.RENEWAL_FLAGS
@@ -231,7 +231,7 @@ flag_id = result[0]['FLAG_ID']
 st.success(f"Flag submitted: {flag_id}")
 ```
 
-**fix option 2:** use a stored procedure that performs the INSERT and returns the flag_id:
+fix option 2: use a stored procedure that performs the INSERT and returns the flag_id:
 ```python
 flag_id = session.call(f"{DATABASE}.{SCHEMA}.INSERT_RENEWAL_FLAG", ...)
 st.success(f"Flag submitted: {flag_id}")
@@ -239,14 +239,14 @@ st.success(f"Flag submitted: {flag_id}")
 
 option 2 is preferred because it also resolves issue 1.1 (sql injection).
 
-**AGENTS.md change:** clarify the flag_id return mechanism. currently the spec says "show
+AGENTS.md change: clarify the flag_id return mechanism. currently the spec says "show
 st.success() with the returned flag_id" but does not specify how to obtain it from the INSERT.
 
 ---
 
 ## 4. heatmap filter gap
 
-**dashboard.py lines 455-476:**
+dashboard.py lines 455-476:
 ```python
 def load_heatmap_data(regions, segments, channels, date_from, date_to, final_only):
     # ...
@@ -263,7 +263,7 @@ the sql query itself (lines 457-471) does not include segment or channel in its 
 either. this means the heatmap always shows data across all segments and all channels,
 regardless of sidebar filter selections.
 
-**fix:** add segment and channel filtering:
+fix: add segment and channel filtering:
 ```python
 df = df[
     (df['region'].isin(regions)) &
@@ -275,14 +275,14 @@ df = df[
 note: the heatmap sql query selects from `FACT_PREMIUM_EVENT` which has segment and channel
 columns, so this filter will work correctly.
 
-**AGENTS.md change:** add an explicit note to the page 2 heatmap spec that all sidebar
+AGENTS.md change: add an explicit note to the page 2 heatmap spec that all sidebar
 filters (region, segment, channel, date range) must apply to the heatmap query.
 
 ---
 
 ## 5. outcome color mapping
 
-**dashboard.py line 293-295:**
+dashboard.py line 293-295:
 ```python
 scale=alt.Scale(
     domain=OUTCOME_DISPLAY_ORDER,
@@ -294,13 +294,13 @@ domain order: ["Renewed", "Lapsed", "Not taken up", "Cancelled"]
 color mapping:
 - Renewed: #1565C0 (primary blue)
 - Lapsed: #FFA726 (accent orange)
-- Not taken up: #FFA726 (accent orange) - **same as Lapsed**
+- Not taken up: #FFA726 (accent orange) - same as Lapsed
 - Cancelled: #E53935 (error red)
 
 two of four outcomes share the same color, making them visually indistinguishable in the
 stacked bar chart (chart 3 on page 1).
 
-**brand-identity SKILL.md** defines:
+brand-identity SKILL.md defines:
 - primary: #1565C0
 - accent: #FFA726
 - status: SUCCESS #4CAF50, WARN #FFA726, ERROR #E53935
@@ -308,13 +308,13 @@ stacked bar chart (chart 3 on page 1).
 the current mapping treats Lapsed and Not taken up as the same category. if this is
 intentional (both are "negative non-cancelled" outcomes), it should be documented. if not:
 
-**fix:** differentiate the two orange outcomes:
+fix: differentiate the two orange outcomes:
 ```python
 range=["#1565C0", "#FFA726", "#FB8C00", "#E53935"]
 ```
 or use a 4-color qualitative palette from brand-identity.
 
-**brand-identity change:** add an explicit outcome color mapping to the skill file:
+brand-identity change: add an explicit outcome color mapping to the skill file:
 ```
 renewal outcome colors:
 - RENEWED: #1565C0 (primary)
@@ -327,7 +327,7 @@ renewal outcome colors:
 
 ## 6. module-level session contradiction
 
-**dashboard.py line 12:**
+dashboard.py line 12:
 ```python
 session = get_active_session()
 ```
@@ -340,13 +340,13 @@ this module-level session object is used by:
 - flag UPDATE (line 660)
 - agent operations query (line 682)
 
-**build-dashboard SKILL.md scaffold template (line 89):**
+build-dashboard SKILL.md scaffold template (line 89):
 ```python
 session = get_active_session()
 ```
 the scaffold template explicitly places this at module level.
 
-**sis-patterns SKILL.md section 1:**
+sis-patterns SKILL.md section 1:
 ```
 call get_active_session() INSIDE the function, never at module level
 ```
@@ -360,7 +360,7 @@ entire app lifecycle. however, the contradiction causes inconsistency: cached da
 functions (load_filter_options, load_kpi_data, etc.) correctly call `get_active_session()`
 inside the function, while non-cached functions use the module-level `session` variable.
 
-**fix:** resolve the contradiction in one of two ways:
+fix: resolve the contradiction in one of two ways:
 
 option A (keep module-level): update sis-patterns to clarify that module-level session is
 acceptable for non-cached code, but cached functions (`@st.cache_data`) MUST call
@@ -384,7 +384,7 @@ option A is recommended because it matches the actual sis behavior and the scaff
 current rule 3 (line 752-758) covers IN-list filter validation only. it does not mention
 INSERT or UPDATE statements with user-supplied text fields.
 
-**add to security rule 3:**
+add to security rule 3:
 
 ```
 all dml (INSERT, UPDATE, DELETE) with user-supplied text values (st.text_input, st.text_area,

@@ -13,9 +13,9 @@ in streamlit in snowflake (sis), `CURRENT_USER()` (a sql function) returns the s
 
 ## alternatives considered
 
-- **`CURRENT_USER()` in sql**: returns the service account. rejected: wrong identity.
-- **`st.experimental_user`**: deprecated in streamlit 1.52. rejected: do not use deprecated apis.
-- **Hardcoded fallback**: e.g. `"system"` instead of `"unknown"`. rejected: masks configuration problems instead of surfacing them.
+- `CURRENT_USER()` in sql: returns the service account. rejected: wrong identity.
+- `st.experimental_user`: deprecated in streamlit 1.52. rejected: do not use deprecated apis.
+- hardcoded fallback: e.g. `"system"` instead of `"unknown"`. rejected: masks configuration problems instead of surfacing them.
 
 ## consequences
 

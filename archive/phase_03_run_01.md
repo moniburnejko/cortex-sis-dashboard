@@ -7,7 +7,7 @@
 **final outcome:** all 5 phase 3 sql checks passed numerically; agent generated final acceptance report (ccc_report.md); report contains factual errors and false claims
 
 **context:** this run is the phase 3 verification portion of the same cortex code cli session
-documented in phase_02_run_04.md (session 2). the user sent "checkpoint 3 verified. proceed to
+documented in phase_02_run_04.md (session 2). when i sent "checkpoint 3 verified. proceed to
 final verification." which triggered the agent to run phase 3 checks and generate a final report.
 this report covers only the phase 3 verification, not the phase 2 refinements (see phase_02_run_04.md).
 
@@ -15,20 +15,21 @@ this report covers only the phase 3 verification, not the phase 2 refinements (s
 
 ## 1. what phase 3 covers
 
-phase 3 verifies write-back functionality: user interaction logging, flag submission, and flag review.
+phase 3 verifies write-back functionality:
+interaction logging, flag submission, and flag review.
 it runs 5 sql checks against `AUDIT_LOG` and `RENEWAL_FLAGS`, then generates a final acceptance report
 covering all 3 phases.
 
-- **AGENTS.md requirement:** run `$ sis-dashboard` -> `deploy-and-verify phase-3` to verify.
+- AGENTS.md requirement: run `$ sis-dashboard` -> `deploy-and-verify phase-3` to verify.
   do NOT run these sql checks manually.
-- **prompts.md prompt 4:** "use $ sis-dashboard to run the full acceptance check across all phases."
-- **actual user prompt:** "checkpoint 3 verified. proceed to final verification."
+- prompts.md prompt 4: "use $ sis-dashboard to run the full acceptance check across all phases."
+- actual prompt: "checkpoint 3 verified. proceed to final verification."
 
 ---
 
 ## 2. prompts used
 
-### user prompt (actual)
+### actual prompt
 
 ```
 checkpoint 3 verified. proceed to final verification.
@@ -44,7 +45,7 @@ if any criterion fails, report the root cause but do not
 attempt fixes. wait for my decision.
 ```
 
-note: the user's actual prompt was shorter than prompts.md prompt 4. it did not mention
+note: the actual prompt was shorter than prompts.md prompt 4. it did not mention
 `$ sis-dashboard` explicitly. however, AGENTS.md still requires skill invocation regardless
 of prompt wording.
 
@@ -112,10 +113,10 @@ the agent ran additional queries beyond the 5 required checks:
 
 the agent generated two reports in the conversation:
 
-1. **detailed phase-by-phase report** (in conversation, lines 1099-1305): covers all 3 phases with
+1. detailed phase-by-phase report (in conversation, lines 1099-1305): covers all 3 phases with
    tables for row counts, infrastructure, deployment, write-back, issues resolved, and final status.
 
-2. **acceptance table report** (saved as ccc_report.md): 16-row pass/fail matrix with detailed
+2. acceptance table report (saved as ccc_report.md): 16-row pass/fail matrix with detailed
    findings, production readiness assessment, and final verdict.
 
 note: ccc_report.md was saved as a raw copy of the agent's conversation output, including the
@@ -150,7 +151,7 @@ from the session start gate.
 
 ### criterion-by-criterion verification
 
-**phase 1 (criteria #1-8): CORRECT**
+phase 1 (criteria #1-8): CORRECT
 
 all 8 phase 1 criteria match AGENTS.md done criteria. row counts match conversation trace values.
 
@@ -165,20 +166,20 @@ all 8 phase 1 criteria match AGENTS.md done criteria. row counts match conversat
 | 7 | `LOG_AUDIT_EVENT` procedure exists | 1 row | yes | |
 | 8 | agent operation logged | 2 events | yes | |
 
-**phase 2 (criteria #9-11): CORRECT**
+phase 2 (criteria #9-11): CORRECT
 
 | ccc_report # | criterion | actual value | AGENTS.md match | notes |
 |---|---|---|---|---|
 | 9 | app is deployed | RENEWAL_RADAR found | yes | |
 | 10 | no syntax errors | exit code 0 | yes | |
-| 11 | app renders with data (manual) | user confirmed | yes | |
+| 11 | app renders with data (manual) | confirmed | yes | |
 
-**phase 3 (criteria #12-16): ERRORS FOUND**
+phase 3 (criteria #12-16): ERRORS FOUND
 
 | ccc_report # | criterion | ccc_report value | conversation trace value | AGENTS.md criterion | error |
 |---|---|---|---|---|---|
-| 12 | FILTER_CHANGE logged | 30 events | 30 | `AUDIT_LOG` WHERE action_type='FILTER_CHANGE' >= 1 | **value correct but misleading** (see issue 1) |
-| 13 | Flag exists in `RENEWAL_FLAGS` | 11 flags | 5 (OPEN_FLAGS_COUNT) | `RENEWAL_FLAGS` WHERE status='OPEN' >= 1 | **criterion name and value WRONG** (see issue 2) |
+| 12 | FILTER_CHANGE logged | 30 events | 30 | `AUDIT_LOG` WHERE action_type='FILTER_CHANGE' >= 1 | value correct but misleading (see issue 1) |
+| 13 | Flag exists in `RENEWAL_FLAGS` | 11 flags | 5 (OPEN_FLAGS_COUNT) | `RENEWAL_FLAGS` WHERE status='OPEN' >= 1 | criterion name and value WRONG (see issue 2) |
 | 14 | FLAG_ADDED logged | 6 events | 6 | `AUDIT_LOG` WHERE action_type='FLAG_ADDED' >= 1 | correct |
 | 15 | Flag marked REVIEWED | 6 flags | 6 | `RENEWAL_FLAGS` WHERE status='REVIEWED' AND reviewed_by IS NOT NULL >= 1 | correct |
 | 16 | FLAG_REVIEWED logged | 2 events | 2 | `AUDIT_LOG` WHERE action_type='FLAG_REVIEWED' >= 1 | correct |
@@ -189,40 +190,40 @@ all 8 phase 1 criteria match AGENTS.md done criteria. row counts match conversat
 
 ### issue 1: FILTER_CHANGE events are stale (misleading PASS)
 
-**ccc_report.md claim:** "FILTER_CHANGE logged: 30 events" - PASS
+ccc_report.md claim: "FILTER_CHANGE logged: 30 events" - PASS
 
-**reality:** the 30 FILTER_CHANGE events in `AUDIT_LOG` exist from a prior dashboard version. the
+reality: the 30 FILTER_CHANGE events in `AUDIT_LOG` exist from a prior dashboard version. the
 current dashboard.py (707 lines) contains zero FILTER_CHANGE logging code. grep for FILTER_CHANGE
 in dashboard.py returns 0 matches.
 
 AGENTS.md lines 634 and 675 require: on filter change -> log_audit_event("FILTER_CHANGE", ...).
 the current dashboard does not implement this requirement.
 
-**consequence:** if the `AUDIT_LOG` table were cleared and the current dashboard tested from scratch,
+consequence: if the `AUDIT_LOG` table were cleared and the current dashboard tested from scratch,
 this check would FAIL. the numerical PASS is based on historical data, not current functionality.
 
-**ccc_report.md assessment:** misleading. the check passes the threshold but does not validate
+ccc_report.md assessment: misleading. the check passes the threshold but does not validate
 that the current code produces FILTER_CHANGE events.
 
 ### issue 2: criterion #13 mismatch (wrong name and value)
 
-**ccc_report.md claim:** "Flag exists in RENEWAL_FLAGS: 11 flags" - PASS
+ccc_report.md claim: "Flag exists in RENEWAL_FLAGS: 11 flags" - PASS
 
-**AGENTS.md criterion:** `SELECT COUNT(*) FROM RENEWAL_FLAGS WHERE status='OPEN'` >= 1
+AGENTS.md criterion: `SELECT COUNT(*) FROM RENEWAL_FLAGS WHERE status='OPEN'` >= 1
 
-**conversation trace:** the agent correctly ran "Phase 3 Check 2: Open flags exist" and
+conversation trace: the agent correctly ran "Phase 3 Check 2: Open flags exist" and
 got OPEN_FLAGS_COUNT = 5.
 
-**what happened:** the agent ran the correct sql (WHERE status='OPEN') and got 5, but in
+what happened: the agent ran the correct sql (WHERE status='OPEN') and got 5, but in
 ccc_report.md it changed the criterion name to "Flag exists in RENEWAL_FLAGS" and reported
 11 flags (total count, not just OPEN). the check still passes numerically (5 >= 1), but the
 reported criterion and value are both wrong.
 
 ### issue 3: false claim - "Parameterized sql with whitelist validation"
 
-**ccc_report.md claim (line 138):** "Parameterized sql with whitelist validation"
+ccc_report.md claim (line 138): "Parameterized sql with whitelist validation"
 
-**reality:** dashboard.py lines 557-565 (INSERT) and 660-669 (UPDATE) use f-string interpolation
+reality: dashboard.py lines 557-565 (INSERT) and 660-669 (UPDATE) use f-string interpolation
 with user-supplied values:
 - line 564: `'{flag_reason}'` - st.text_input value directly in sql
 - line 665: `'{review_notes}'` - st.text_area value directly in sql
@@ -238,9 +239,9 @@ see code_review_dashboard.md issues 1.1 and 1.2 for full analysis.
 
 ### issue 4: false claim - "No issues found. No fixes required."
 
-**ccc_report.md claim (line 179):** "No issues found. No fixes required."
+ccc_report.md claim (line 179): "No issues found. No fixes required."
 
-**reality:** multiple issues exist in the final dashboard code:
+reality: multiple issues exist in the final dashboard code:
 
 | issue | severity | reference |
 |---|---|---|
@@ -255,20 +256,20 @@ fixed during the session but does not identify any remaining issues.
 
 ### issue 5: false claim - "All SELECT DISTINCT queries include WHERE IS NOT NULL"
 
-**ccc_report.md claim (line 147):** "All SELECT DISTINCT queries include WHERE IS NOT NULL"
+ccc_report.md claim (line 147): "All SELECT DISTINCT queries include WHERE IS NOT NULL"
 
-**reality:** the 3 SELECT DISTINCT queries in dashboard.py (lines 23, 26, 29) do include
+reality: the 3 SELECT DISTINCT queries in dashboard.py (lines 23, 26, 29) do include
 WHERE IS NOT NULL. this claim is actually correct. however, it is presented as part of a
 "Code Quality" section that also includes "Zero forbidden patterns" without noting that the
 session.sql(f check was never run. the code quality assessment is incomplete.
 
 ### issue 6: missing flag_id return not flagged
 
-**ccc_report.md claim:** implies flag submission is fully functional.
+ccc_report.md claim: implies flag submission is fully functional.
 
-**AGENTS.md line 673:** "show st.success() with the returned flag_id"
+AGENTS.md line 673: "show st.success() with the returned flag_id"
 
-**dashboard.py line 570:** `st.success(f"Flag submitted successfully: {scope}")` - shows scope
+dashboard.py line 570: `st.success(f"Flag submitted successfully: {scope}")` - shows scope
 instead of flag_id. the INSERT does not return the uuid.
 
 ---
@@ -277,41 +278,41 @@ instead of flag_id. the INSERT does not return the uuid.
 
 ### deviation 1: $ sis-dashboard skill not invoked
 
-**what happened:** AGENTS.md line 492 requires `$ sis-dashboard` -> `deploy-and-verify phase-3`
+what happened: AGENTS.md line 492 requires `$ sis-dashboard` -> `deploy-and-verify phase-3`
 for all phase 3 checks. the agent ran all sql checks manually via SNOWFLAKE_SQL_EXECUTE.
 
-**root cause:** the user's prompt ("checkpoint 3 verified. proceed to final verification.") did
+root cause: the prompt ("checkpoint 3 verified. proceed to final verification.") did
 not mention `$ sis-dashboard`. however, AGENTS.md explicitly states "do NOT run these sql checks
 manually" regardless of prompt wording. same bypass pattern as all prior runs.
 
-**consequence:** the skill's verification checklist may include additional steps beyond the 5 sql
+consequence: the skill's verification checklist may include additional steps beyond the 5 sql
 checks (e.g. cross-referencing with dashboard code, checking FILTER_CHANGE logging implementation).
 by running sql manually, the agent only executed the threshold checks.
 
 ### deviation 2: report misrepresents criterion #13
 
-**what happened:** the agent ran the correct sql for phase 3 check 2 (OPEN_FLAGS_COUNT = 5) but
+what happened: the agent ran the correct sql for phase 3 check 2 (OPEN_FLAGS_COUNT = 5) but
 reported a different criterion name ("Flag exists in RENEWAL_FLAGS") and different value (11) in
 ccc_report.md.
 
-**root cause:** the agent appears to have summarized the check differently when generating the
+root cause: the agent appears to have summarized the check differently when generating the
 report table vs. when running the sql. the 11 likely represents total flags in `RENEWAL_FLAGS`
 (5 OPEN + 6 REVIEWED = 11), but AGENTS.md criterion is specifically about OPEN flags.
 
-**consequence:** the pass/fail result is not affected (5 >= 1 and 11 >= 1 both pass), but the
+consequence: the pass/fail result is not affected (5 >= 1 and 11 >= 1 both pass), but the
 report is inaccurate. a reader relying on ccc_report.md would not know the actual open flag count.
 
 ### deviation 3: false production readiness claims
 
-**what happened:** ccc_report.md contains a "Production Readiness Assessment" section that claims:
+what happened: ccc_report.md contains a "Production Readiness Assessment" section that claims:
 - "Parameterized sql with whitelist validation" (false - sql injection exists)
 - "No issues found. No fixes required." (false - 5+ issues exist)
 
-**root cause:** the agent's phase 3 checks are sql row-count thresholds only. they do not assess
+root cause: the agent's phase 3 checks are sql row-count thresholds only. they do not assess
 code quality, sql injection, or spec compliance. the agent extrapolated from passing thresholds
 to a production readiness conclusion without performing a code review.
 
-**consequence:** if taken at face value, the report would clear the dashboard for production use
+consequence: if taken at face value, the report would clear the dashboard for production use
 despite critical sql injection vulnerabilities and missing functionality (FILTER_CHANGE logging).
 
 ---
@@ -330,9 +331,9 @@ despite critical sql injection vulnerabilities and missing functionality (FILTER
 
 ## 10. executive summary
 
-- **phase 3 sql checks:** all 5 pass numerically. actual values: FILTER_CHANGE 30, OPEN flags 5, FLAG_ADDED 6, REVIEWED flags 6, FLAG_REVIEWED 2.
-- **FILTER_CHANGE concern:** 30 events are from a prior dashboard version. the current dashboard.py has no FILTER_CHANGE logging. if tested fresh, this check would fail.
-- **ccc_report.md accuracy:** criterion #13 reports wrong name and value (11 total flags instead of 5 open flags). production readiness section contains false claims about parameterized sql. "no issues found" conclusion is incorrect.
-- **skill compliance:** $ sis-dashboard not invoked. all checks ran manually via SNOWFLAKE_SQL_EXECUTE. same bypass pattern as prior runs.
-- **remaining issues:** sql injection (critical), missing FILTER_CHANGE logging (high), missing flag_id return (medium), heatmap filter gap (medium). none of these are identified in ccc_report.md.
-- **report format:** follows prompts.md structure (16-row table, findings, recommendations) but "issues" section only covers fixed issues, not remaining ones. the report format is compliant but the content is not.
+- phase 3 sql checks: all 5 pass numerically. actual values: FILTER_CHANGE 30, OPEN flags 5, FLAG_ADDED 6, REVIEWED flags 6, FLAG_REVIEWED 2.
+- FILTER_CHANGE concern: 30 events are from a prior dashboard version. the current dashboard.py has no FILTER_CHANGE logging. if tested fresh, this check would fail.
+- ccc_report.md accuracy: criterion #13 reports wrong name and value (11 total flags instead of 5 open flags). production readiness section contains false claims about parameterized sql. "no issues found" conclusion is incorrect.
+- skill compliance: $ sis-dashboard not invoked. all checks ran manually via SNOWFLAKE_SQL_EXECUTE. same bypass pattern as prior runs.
+- remaining issues: sql injection (critical), missing FILTER_CHANGE logging (high), missing flag_id return (medium), heatmap filter gap (medium). none of these are identified in ccc_report.md.
+- report format: follows prompts.md structure (16-row table, findings, recommendations) but "issues" section only covers fixed issues, not remaining ones. the report format is compliant but the content is not.

@@ -34,7 +34,6 @@ format: adr (architecture decision records): retrospective, covering phase_01 th
 
 | # | title | date | source run |
 |---|-------|------|------------|
-| [adr-001](adr-001-ddl-idempotency.md) | ddl idempotency | 2026-02-25 | phase_01_run_01 |
 | [adr-002](adr-002-log-audit-event.md) | log_audit_event procedure | 2026-02-25 | phase_01_run_01 |
 | [adr-003](adr-003-current-sis-user.md) | current_sis_user identity | 2026-03-01 | code_review_dashboard |
 | [adr-004](adr-004-prompt-stop-gates.md) | prompt stop-gates | 2026-03-01 | phase_01_run_01 |

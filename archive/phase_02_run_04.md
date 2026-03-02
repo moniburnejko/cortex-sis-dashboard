@@ -1,7 +1,7 @@
 # phase 2 execution report: renewal radar sis dashboard
 
 **date:** 2026-03-01
-**sessions:** cortex code cli, 2 agent sessions (build + refinement), 5 user prompts total
+**sessions:** cortex code cli, 2 agent sessions (build + refinement), 5 prompts total
 **environment:** CORTEX_DB.CORTEX_SCHEMA, role CORTEX_ADMIN, warehouse CORTEX_WH
 **model:** claude-sonnet-4-5
 **final outcome:** dashboard built, deployed, refined over 5 deploy cycles; display-label layer added; scope bug introduced and fixed; awaiting final review
@@ -17,7 +17,7 @@ check in build-dashboard, 7 spec fixes in AGENTS.md).
 phase 2 builds and deploys the 3-page streamlit in snowflake dashboard.
 it is a single prompt (prompt 3) with a checkpoint before phase 3 begins.
 
-- **prompt 3 (dashboard build and deploy):**
+- prompt 3 (dashboard build and deploy):
   - enter `/plan` before pasting the prompt (required per prompts.md)
   - load sis patterns via `$ sis-streamlit` before planning
   - scaffold structure via `$ sis-streamlit` -> `build-dashboard` (no args)
@@ -181,14 +181,14 @@ the plan correctly specified skill-based scan and deploy. execution did not foll
 
 #### execution
 
-**skills loaded:**
+skills loaded:
 - `$ sis-streamlit` - invoked correctly
 - sub-skills read: sis-patterns (202 lines), brand-identity (166 lines), build-dashboard (263 lines)
 
 note: build-dashboard was 263 lines (vs. 220 lines in run_03 session 1), confirming the post-run-03
 sql parameterization check was already in the skill file.
 
-**files created:**
+files created:
 
 | file | lines | location | result |
 |---|---|---|---|
@@ -196,19 +196,19 @@ sql parameterization check was already in the skill file.
 | snowflake.yml | 7 | project root | correct format (entities structure) - no fix needed |
 | dashboard.py | 574 | project root | written, syntax check passed |
 
-**pre-deploy scan 1 (direct bash commands):**
+pre-deploy scan 1 (direct bash commands):
 
 - `grep -n "st."` - confirmed `st.set_page_config()` at line 9 (first st.* call)
 - `grep` for st.fragment, st.experimental_rerun, PARSE_JSON, horizontal=True, applymap, st.rerun - all 0
 - `python3 -m py_compile dashboard.py` - exit code 0
 - `session.sql(f` check: NOT run (see deviation 3)
 
-**deployment 1:**
+deployment 1:
 - command: `snow streamlit deploy --replace --connection pl_agents_team`
 - result: success
 - verified: `snow streamlit list --like "RENEWAL_RADAR"` - RENEWAL_RADAR present
 
-**runtime error (found after testing the app):**
+runtime error (found after testing the app):
 
 a runtime error occurred on the kpi overview page:
 
@@ -233,12 +233,12 @@ not a snowpark `Column`. snowpark `.filter()` requires a Column expression. the 
 filtering on lines 115-121 already handled all filter logic correctly, making the snowpark
 filter redundant.
 
-**fix:**
+fix:
 - removed `.filter(...)` call entirely
 - changed to: `df = _session.table(f"{DATABASE}.{SCHEMA}.FACT_RENEWAL").to_pandas()`
 - verified: `pd.Series.*isin` grep - 0 matches; python3 -m py_compile - pass; forbidden patterns still 0
 
-**deployment 2:**
+deployment 2:
 - command: `snow streamlit deploy --replace --connection pl_agents_team`
 - result: success
 - memory updated: `/memories/phase2_dashboard_build.md`
@@ -249,12 +249,11 @@ agent stopped and waited for confirmation.
 
 ### session 2: post-confirmation refinement
 
-this session started after the user tested the deployed dashboard and found visual
-and functional issues. 4 user prompts, 3 deployments.
+this session started after testing the deployed dashboard, which revealed visual and functional issues. it consisted of 4 prompts and 3 deployments.
 
 #### prompt 1: bug fixes
 
-**actions:**
+actions:
 1. read dashboard.py (617 lines)
 2. identified issue 1 root cause: `FACT_PREMIUM_EVENT.renewal_outcome` is NULL for non-renewed policies.
    only RENEWED records have a value, so the chart showed a single bar.
@@ -270,7 +269,7 @@ and functional issues. 4 user prompts, 3 deployments.
    - `grep -n "st."` - confirmed st.set_page_config at line 9
    - forbidden patterns (st.rerun, horizontal=True, applymap, st.fragment): all 0
    - `python3 -m py_compile`: exit code 0
-   - **session.sql(f check: NOT RUN** (see deviation 3)
+   - session.sql(f check: NOT RUN (see deviation 3)
 9. read deploy-and-verify SKILL.md (178 lines)
 10. verified snowflake.yml (7 lines, correct)
 11. checked current role via `snow sql SELECT CURRENT_ROLE()` - CORTEX_ADMIN
@@ -279,11 +278,11 @@ and functional issues. 4 user prompts, 3 deployments.
 14. verified: `AUDIT_LOG` accessible (38 events)
 15. updated memory
 
-**deployment 3 result:** success. 617 lines -> 617 lines (edits only, no line count change).
+deployment 3 result: success. 617 lines -> 617 lines (edits only, no line count change).
 
 #### prompt 2: display-label layer
 
-**actions:**
+actions:
 1. entered plan mode
 2. queried snowflake for distinct values: regions (7), segments (5), channels (3)
 3. grepped for all display points (charts, filters, tables)
@@ -303,18 +302,18 @@ and functional issues. 4 user prompts, 3 deployments.
 8. deployed: `snow streamlit deploy --replace` - success
 9. file grew from 617 to 706 lines
 
-**deployment 4 result:** success. display-label layer added.
+deployment 4 result: success. display-label layer added.
 
-**verification attempt (prompt 2 follow-up):**
+verification attempt (prompt 2 follow-up):
 - agent attempted git diff HEAD, git log, git status
 - dashboard.py was never committed (untracked file) - all diffs returned empty
 - agent wrote python verification scripts to inspect sql, session_state, and audit log calls
 - scripts confirmed no changes to these three areas
-- **see deviation 5: the verification method was fragile**
+- see deviation 5: the verification method was fragile
 
 #### prompt 3: scope column bug fix
 
-**actions:**
+actions:
 1. read dashboard.py (then at 629 lines, after some intermediate edits)
 2. grepped for `scope_parts.append(` - found 4 occurrences (3 in flag submission + 1 for scope join)
 3. identified root cause: lines 543, 546, 549 were `scope_parts.append(flag_region)` instead
@@ -326,24 +325,24 @@ and functional issues. 4 user prompts, 3 deployments.
 8. ran pre-deploy scan 3 (direct bash commands):
    - snowflake.yml exists, st.set_page_config first, all forbidden patterns 0
    - python3 -m py_compile: exit code 0
-   - **session.sql(f check: NOT RUN**
+   - session.sql(f check: NOT RUN
 9. deployed: `snow streamlit deploy --replace` - success
 10. verified: snow streamlit list - RENEWAL_RADAR present
 
-**db data correction (prompt 3 follow-up):**
-- user reported old flags still showed TX in scope column
+db data correction (prompt 3 follow-up):
+- old flags still showed TX in scope column
 - agent ran UPDATE: `UPDATE RENEWAL_FLAGS SET scope = 'REGION' WHERE scope = 'TX'` - 2 rows updated
 - agent found TN also needed correction, ran second UPDATE: `SET scope = 'REGION' WHERE scope = 'TN'` - 1 row
 - verified: all scope values now valid (REGION, SEGMENT, SEGMENT_CHANNEL, REGION_SEGMENT, REGION_SEGMENT_CHANNEL)
 
-**deployment 5 result:** success. scope bug fixed. db records corrected.
+deployment 5 result: success. scope bug fixed. db records corrected.
 
 #### prompt 4: phase 3 verification checks (conversation trace only)
 
-the user asked the agent to run phase 3 verification. this is documented here as part of
+agent was asked to run phase 3 verification. this is documented here as part of
 the conversation trace only. a separate phase 3 assessment is not part of this report.
 
-**actions:**
+actions:
 1. ran phase 3 done criteria sql checks via SNOWFLAKE_SQL_EXECUTE:
    - FILTER_CHANGE events: 30 (>= 1 required) - PASS
    - open flags: 5 (>= 1 required) - PASS
@@ -354,7 +353,7 @@ the conversation trace only. a separate phase 3 assessment is not part of this r
 3. verified infrastructure: 5 tables, 1 view, 1 procedure
 4. verified scope column integrity: all 11 flags use valid type labels
 
-**observations:**
+observations:
 - the 30 FILTER_CHANGE events in `AUDIT_LOG` exist from a prior dashboard version. the current
   dashboard.py (707 lines) does not contain any FILTER_CHANGE logging code. see
   code_review_dashboard.md issue 2 for details.
@@ -388,7 +387,7 @@ the conversation trace only. a separate phase 3 assessment is not part of this r
 | `$ sis-streamlit` -> `brand-identity` | yes (before chart/label code) | not loaded separately | FAIL - display-label layer written without loading brand-identity |
 | `$ sis-streamlit` -> `deploy-and-verify` | yes (each deploy) | read SKILL.md; `snow streamlit deploy --replace` direct | PARTIAL - deploy steps followed, verification steps partially followed |
 
-**notes:**
+notes:
 - in session 2, `$ sis-streamlit` was invoked once at the start of prompt 1 but not re-invoked for prompts 2-4.
 - `$ brand-identity` was not loaded before the display-label layer (prompt 2), even though the
   prompt involved creating label mappings and updating chart label/color code.
@@ -401,119 +400,119 @@ the conversation trace only. a separate phase 3 assessment is not part of this r
 
 ### deviation 1: session start gate not invoked (both sessions)
 
-**what happened:** `$ check-local-environment` and `$ check-snowflake-context` were not invoked
+what happened: `$ check-local-environment` and `$ check-snowflake-context` were not invoked
 in either session. in session 1, the agent verified context directly via `SNOWFLAKE_SQL_EXECUTE`
 calls. in session 2, the agent went directly to reading dashboard.py.
 
-**root cause:** in session 1, the agent treated memory validation (checking phase 1 state)
+root cause: in session 1, the agent treated memory validation (checking phase 1 state)
 as equivalent to the session start gate. in session 2, the agent treated it as a continuation
 of prior work rather than a new session requiring gate checks. however, AGENTS.md states
 "before executing any ddl, data loading, or code generation in this session" - which includes
 code edits.
 
-**consequence:** no practical impact (context was correct from prior runs). however, the session
+consequence: no practical impact (context was correct from prior runs). however, the session
 gate exists to catch environment drift and was bypassed in both sessions.
 
-**status:** open. same pattern as runs 02-03.
+status: open. same pattern as runs 02-03.
 
 ### deviation 2: scan and deploy run as direct commands (both sessions)
 
-**what happened:** the session 1 plan correctly specified skill-based scan and deploy, but both
+what happened: the session 1 plan correctly specified skill-based scan and deploy, but both
 were executed as direct bash commands. session 2 followed the same pattern across all 3 deploy cycles.
 
-**root cause:** same as all prior runs - skill files are markdown checklists, not executable
+root cause: same as all prior runs - skill files are markdown checklists, not executable
 wrappers. the agent reads the skill and follows steps directly.
 
-**consequence:** no sql parameterization check run during any scan (see deviation 3). deploy
+consequence: no sql parameterization check run during any scan (see deviation 3). deploy
 skipped post-deploy user_packages verification in some cycles.
 
-**status:** open pattern.
+status: open pattern.
 
 ### deviation 3: sql parameterization check not run (5 scans total)
 
-**what happened:** the build-dashboard skill (263 lines) includes the mandatory
+what happened: the build-dashboard skill (263 lines) includes the mandatory
 `session.sql(f` check added in the post-run-02 planning phase. this check was NOT run
 in any of the 5 pre-deploy scans across both sessions.
 
-**root cause:** consequence of deviation 2. the agent ran its own set of pattern checks
+root cause: consequence of deviation 2. the agent ran its own set of pattern checks
 rather than following the build-dashboard scan checklist step by step. the basic forbidden
 pattern checks were run, but the sql parameterization check was consistently skipped.
 
-**consequence:** sql injection vulnerabilities in the INSERT (flag_reason) and UPDATE
+consequence: sql injection vulnerabilities in the INSERT (flag_reason) and UPDATE
 (review_notes) statements were not caught in any scan cycle. these existed from the
 initial build and persisted through all refinements.
 see code_review_dashboard.md issue 1.1 and 1.2 for details.
 
-**status:** open pattern. sql parameterization check is in the skill but not reliably executed
+status: open pattern. sql parameterization check is in the skill but not reliably executed
 when scan runs as direct commands.
 
 ### deviation 4: runtime error not caught by pre-deploy scan (session 1)
 
-**what happened:** the deployed app threw a TypeError on the kpi overview page
+what happened: the deployed app threw a TypeError on the kpi overview page
 (`pandas.Series` passed to snowpark `.filter()`). this was not caught by pre-deploy scan 1.
 
-**root cause:** the pre-deploy scan checks for forbidden api patterns (st.rerun, @st.fragment,
+root cause: the pre-deploy scan checks for forbidden api patterns (st.rerun, @st.fragment,
 etc.) and sql injection. it does not check for snowpark api misuse such as passing pandas
 objects to snowpark methods. this is a logic error that only surfaces at runtime with live data.
 
-**consequence:** an extra deploy cycle was required. the fix was straightforward and
+consequence: an extra deploy cycle was required. the fix was straightforward and
 correctly identified on the first attempt.
 
-**status:** open class of bug. the build-dashboard scan checklist does not cover snowpark
+status: open class of bug. the build-dashboard scan checklist does not cover snowpark
 api correctness.
 
 ### deviation 5: unable to verify changes via version control (session 2)
 
-**what happened:** when the user asked the agent to verify that sql queries, session_state,
+what happened: when agent was asked to verify that sql queries, session_state,
 and audit log payloads were not altered by the display-label additions, the agent attempted
 to use `git diff HEAD`, `git log`, and `git status`. all returned empty because dashboard.py
 was never committed to the repository.
 
-**root cause:** dashboard.py is an untracked file. it was never committed in any prior run.
+root cause: dashboard.py is an untracked file. it was never committed in any prior run.
 the agent has no baseline to compare against.
 
-**consequence:** the agent fell back to writing python verification scripts that inspected the
+consequence: the agent fell back to writing python verification scripts that inspected the
 current file for sql patterns, session_state keys, and audit log calls. while the scripts
 confirmed the three areas were clean, this method cannot detect removed or altered code -
 it can only confirm what is currently present.
 
-**status:** open. dashboard.py should be committed after each successful deployment to enable
+status: open. dashboard.py should be committed after each successful deployment to enable
 version-controlled change verification.
 
 ### deviation 6: scope_parts.append bug (session 2, agent's own code)
 
-**what happened:** when implementing the display-label layer (prompt 2), the agent wrote
+what happened: when implementing the display-label layer (prompt 2), the agent wrote
 `scope_parts.append(flag_region)` instead of `scope_parts.append("REGION")` on lines 543,
 546, and 549. this caused the `RENEWAL_FLAGS.scope` column to store raw db values (TX, TN)
 instead of type labels (REGION, SEGMENT, CHANNEL).
 
-**root cause:** the agent restructured the flag submission code during the display-label
+root cause: the agent restructured the flag submission code during the display-label
 additions. the original code (from session 1) had the correct scope construction, but the
 agent's refactoring introduced the error. the agent's own pre-deploy scan and verification
-did not catch this - it was discovered by the user testing the deployed app.
+did not catch this - it was discovered when testing the deployed app.
 
-**consequence:** 3 flags were inserted with incorrect scope values (TX, TN instead of REGION).
+consequence: 3 flags were inserted with incorrect scope values (TX, TN instead of REGION).
 required a code fix (prompt 3) and a db data correction (2 UPDATE statements).
 
-**status:** fixed in session 2 prompt 3. demonstrates that the pre-deploy scan does not
+status: fixed in session 2 prompt 3. demonstrates that the pre-deploy scan does not
 cover logic correctness, only pattern-based checks.
 
 ### deviation 7: compound skill name syntax error (session 2)
 
-**what happened:** in session 2 prompt 3, the agent attempted to invoke
+what happened: in session 2 prompt 3, the agent attempted to invoke
 `$ sis-streamlit -> deploy-and-verify` as a compound skill name. cortex code cli returned
 "Skill 'sis-streamlit -> deploy-and-verify' was not found."
 
-**root cause:** cortex code cli's `$ skill-name` syntax does not support compound routing
+root cause: cortex code cli's `$ skill-name` syntax does not support compound routing
 (e.g. `parent -> child`). sub-skills must be accessed by reading the parent skill's SKILL.md
 which contains routing instructions. the agent has seen the `->` notation in AGENTS.md and
 reports but confused it with the actual invocation syntax.
 
-**consequence:** minor - the agent fell back to reading the SKILL.md directly, which achieved
+consequence: minor - the agent fell back to reading the SKILL.md directly, which achieved
 the same outcome (loading the skill content). however, this indicates the `->` routing notation
 in AGENTS.md and reports may be confusing to the agent.
 
-**status:** informational. consider clarifying in AGENTS.md that `->` is a conceptual routing
+status: informational. consider clarifying in AGENTS.md that `->` is a conceptual routing
 notation, not an invocation syntax.
 
 ---
@@ -541,7 +540,7 @@ notation, not an invocation syntax.
 
 no skill files or AGENTS.md were changed. the runtime error fix was applied only to dashboard.py.
 
-**dashboard.py:**
+dashboard.py:
 - line 113-115: removed broken snowpark `.filter(pd.Series(...).isin(...))` call
 - replaced with: `df = _session.table(f"{DATABASE}.{SCHEMA}.FACT_RENEWAL").to_pandas()`
 - all pandas-level filtering on subsequent lines was already correct and unchanged
@@ -562,7 +561,7 @@ no skill files or AGENTS.md were changed. the runtime error fix was applied only
 | 2 | flags table mapping | lines 616-619 | status, scope_region, scope_segment, scope_channel mapped |
 | 3 | scope_parts fix | lines 542-550 | append("REGION") instead of append(flag_region) |
 
-**file size:** 574 lines (session 1 start) -> 617 lines (session 1 end) -> 707 lines (session 2 end)
+file size: 574 lines (session 1 start) -> 617 lines (session 1 end) -> 707 lines (session 2 end)
 
 #### database changes
 
@@ -579,12 +578,12 @@ none within either session. all governance documents were unchanged.
 
 ## 9. executive summary
 
-- **deployment status:** successful (5 deploy cycles across 2 sessions). app accessible at CORTEX_DB.CORTEX_SCHEMA.RENEWAL_RADAR.
-- **session 1 (build):** dashboard built from scratch (574 lines), runtime TypeError found post-deploy (pandas.Series in snowpark filter), fixed and redeployed.
-- **session 2 (refinement):** outcome chart fixed (JOIN to `FACT_RENEWAL`), axis titles corrected, display-label layer added (617 -> 707 lines), scope bug introduced by agent and fixed, db records corrected.
-- **display-label layer:** added successfully. all raw db values now show human-readable labels in charts, filters, and tables. sql queries, session state, and audit log payloads confirmed unchanged.
-- **scope bug:** agent introduced scope_parts.append(flag_region) error during display-label implementation. caught by user testing, fixed in session 2 prompt 3, db records corrected.
-- **sql injection:** pre-deploy scan did not run session.sql(f check in any of the 5 deploy cycles. existing sql injection vulnerabilities (flag_reason, review_notes) were not caught. see code_review_dashboard.md for full analysis.
-- **FILTER_CHANGE logging:** the agent's phase 3 checks reported 30 FILTER_CHANGE events as passing, but these exist from a prior dashboard version. the current dashboard.py does not contain FILTER_CHANGE logging code. see code_review_dashboard.md for details.
-- **session start gate:** not invoked in either session. same pattern as all prior runs.
-- **skill compliance:** sis-streamlit loaded in both sessions; brand-identity not loaded for display-label work; scan and deploy ran as direct commands across all 5 cycles.
+- deployment status: successful (5 deploy cycles across 2 sessions). app accessible at CORTEX_DB.CORTEX_SCHEMA.RENEWAL_RADAR.
+- session 1 (build): dashboard built from scratch (574 lines), runtime TypeError found post-deploy (pandas.Series in snowpark filter), fixed and redeployed.
+- session 2 (refinement): outcome chart fixed (JOIN to `FACT_RENEWAL`), axis titles corrected, display-label layer added (617 -> 707 lines), scope bug introduced by agent and fixed, db records corrected.
+- display-label layer: added successfully. all raw db values now show human-readable labels in charts, filters, and tables. sql queries, session state, and audit log payloads confirmed unchanged.
+- scope bug: agent introduced scope_parts.append(flag_region) error during display-label implementation. caught when testing, fixed in session 2 prompt 3, db records corrected.
+- sql injection: pre-deploy scan did not run session.sql(f check in any of the 5 deploy cycles. existing sql injection vulnerabilities (flag_reason, review_notes) were not caught. see code_review_dashboard.md for full analysis.
+- FILTER_CHANGE logging: the agent's phase 3 checks reported 30 FILTER_CHANGE events as passing, but these exist from a prior dashboard version. the current dashboard.py does not contain FILTER_CHANGE logging code. see code_review_dashboard.md for details.
+- session start gate: not invoked in either session. same pattern as all prior runs.
+- skill compliance: sis-streamlit loaded in both sessions; brand-identity not loaded for display-label work; scan and deploy ran as direct commands across all 5 cycles.

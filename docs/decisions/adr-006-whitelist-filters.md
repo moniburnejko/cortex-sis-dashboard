@@ -10,16 +10,16 @@ filters (regions, segments, channels) from `st.multiselect` are interpolated int
 ## decision
 
 two-layer protection:
-1. **whitelist validation**: `selected = [r for r in user_selected if r in VALID_LIST]`. filters out values outside the allowed set
-2. **snowpark api**: `session.table(...).filter(col('region').isin(selected))` instead of f-string sql. parameterization via snowpark, not string concatenation
+1. whitelist validation: `selected = [r for r in user_selected if r in VALID_LIST]`. filters out values outside the allowed set
+2. snowpark api: `session.table(...).filter(col('region').isin(selected))` instead of f-string sql. parameterization via snowpark, not string concatenation
 
 `VALID_LIST` is fetched from the db at startup (or via `@st.cache_data`): a dynamic whitelist that stays current.
 
 ## alternatives considered
 
-- **f-string with `.join()` after validation**: `f"IN ({','.join(selected)})"`. still an f-string sql construction, non-compliant with security rule 3. rejected even with validation.
-- **snowpark for everything including DATE_TRUNC**: technically correct, but the snowpark api for `DATE_TRUNC('month', col(...))` is verbose; mixing snowpark and session.sql is fine for different queries. rejected as over-engineering.
-- **no validation + snowpark isin()**: snowpark `isin()` with parameterization is technically sufficient, but the whitelist adds defence in depth. both layers are retained.
+- f-string with `.join()` after validation: `f"IN ({','.join(selected)})"`. still an f-string sql construction, non-compliant with security rule 3. rejected even with validation.
+- snowpark for everything including DATE_TRUNC: technically correct, but the snowpark api for `DATE_TRUNC('month', col(...))` is verbose; mixing snowpark and session.sql is fine for different queries. rejected as over-engineering.
+- no validation + snowpark isin(): snowpark `isin()` with parameterization is technically sufficient, but the whitelist adds defence in depth. both layers are retained.
 
 ## consequences
 

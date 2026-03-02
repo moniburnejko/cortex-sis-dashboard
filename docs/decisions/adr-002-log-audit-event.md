@@ -13,9 +13,9 @@ issuing an INSERT into `AUDIT_LOG` directly from sis (streamlit in snowflake) ca
 
 ## alternatives considered
 
-- **Direct INSERT from sis**: simple, but `CURRENT_USER()` in the INSERT returns the service account instead of the user. rejected: loss of audit value.
-- **Trigger on AUDIT_LOG**: not available in this form in snowflake for table INSERT triggers from the application side. rejected: not feasible.
-- **INSERT with hardcoded CURRENT_SIS_USER in an f-string**: resolves the user_name issue but creates a sql injection vulnerability (see adr-007). rejected: security problem.
+- direct insert from sis: simple, but `CURRENT_USER()` in the INSERT returns the service account instead of the user. rejected: loss of audit value.
+- trigger on AUDIT_LOG: not available in this form in snowflake for table INSERT triggers from the application side. rejected: not feasible.
+- insert with hardcoded CURRENT_SIS_USER in an f-string: resolves the user_name issue but creates a sql injection vulnerability (see adr-007). rejected: security problem.
 
 ## consequences
 

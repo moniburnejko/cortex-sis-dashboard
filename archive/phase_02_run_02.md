@@ -13,7 +13,7 @@
 phase 2 builds and deploys the 3-page streamlit in snowflake dashboard.
 it is a single prompt (prompt 3) with a checkpoint before phase 3 begins.
 
-- **prompt 3 (dashboard build and deploy):**
+- prompt 3 (dashboard build and deploy):
   - enter `/plan` before pasting the prompt (required per prompts.md)
   - load sis patterns via `$ sis-streamlit` before planning
   - scaffold structure via `$ sis-streamlit` -> `build-dashboard` (no args)
@@ -89,18 +89,18 @@ execution did not follow these steps - see deviation 1 and 2.
 
 ### execution
 
-**skills loaded:**
+skills loaded:
 - `$ sis-streamlit` - invoked correctly
 - sub-skills read directly: sis-patterns (186 lines), build-dashboard (220 lines), brand-identity (165 lines)
 
-**build:**
+build:
 
 1. created `streamlit/` directory
 2. wrote `streamlit/environment.yml` (8 lines, sis dependencies)
 3. wrote `streamlit/dashboard.py` (694 lines, all 3 pages)
 4. verified python syntax: `python3 -m py_compile streamlit/dashboard.py` - exit code 0
 
-**pre-deploy scan (direct bash commands):**
+pre-deploy scan (direct bash commands):
 
 - `grep -c "st.rerun()"` - 0
 - `grep -c ".applymap("` - grep syntax error on first attempt, re-run without escaping - 0
@@ -112,7 +112,7 @@ execution did not follow these steps - see deviation 1 and 2.
 
 read deploy-and-verify sub-skill before deploying.
 
-**snowflake.yml creation and fix cycle:**
+snowflake.yml creation and fix cycle:
 
 | attempt | result | issue |
 |---|---|---|
@@ -120,12 +120,12 @@ read deploy-and-verify sub-skill before deploying.
 | fix: added entities structure | FAIL | `env_file:` field not supported in DefinitionV20 |
 | fix: removed `env_file` field | SUCCESS | deployed at 13:57:10 PST |
 
-**first deployment:**
+first deployment:
 - command: `snow streamlit deploy --replace`
 - result: success after two snowflake.yml fix cycles
 - verified: `snow streamlit list` - RENEWAL_RADAR present
 
-**file relocation:**
+file relocation:
 
 environment.yml was not visible in the sis project; files were moved to root. agent:
 
@@ -134,7 +134,7 @@ environment.yml was not visible in the sis project; files were moved to root. ag
 3. verified python syntax - exit code 0
 4. redeployed: `snow streamlit deploy --replace` - success at 14:01:46 PST
 
-**final state:**
+final state:
 
 ```
 app URL: https://app.snowflake.com/CORTEX_ORG/CORTEX_ACCOUNT/#/streamlit-apps/CORTEX_DB.CORTEX_SCHEMA.RENEWAL_RADAR
@@ -164,57 +164,57 @@ agent stopped and waited for confirmation that all 3 pages render correctly.
 
 ### deviation 1: scan run as direct bash commands
 
-**what happened:** the agent read the deploy-and-verify sub-skill before deploying but ran all
+what happened: the agent read the deploy-and-verify sub-skill before deploying but ran all
 pre-deploy scan checks as direct bash grep/compile commands rather than through the
 `$ sis-streamlit` -> `build-dashboard` skill. build-dashboard sub-skill was not re-read
 at scan time.
 
-**root cause:** skill files are markdown checklists. after loading sub-skills at the start,
+root cause: skill files are markdown checklists. after loading sub-skills at the start,
 the agent had their content in context and executed the steps directly. it did not distinguish
 between "running a skill" and "reading a skill and following it manually."
 
-**consequence:** the scan did not apply the full build-dashboard checklist - notably missing
+consequence: the scan did not apply the full build-dashboard checklist - notably missing
 the sql parameterization check. no sql injection issue was caught in this run.
 
-**status:** open pattern (no mechanical enforcement). sql injection was found and fixed
+status: open pattern (no mechanical enforcement). sql injection was found and fixed
 in the next run (phase_02_run_03.md) based on planning phase analysis.
 
 ### deviation 2: deploy run as direct command
 
-**what happened:** deployment used `snow streamlit deploy --replace` directly in both
+what happened: deployment used `snow streamlit deploy --replace` directly in both
 the initial deploy and the post-relocation redeploy. this bypassed the deploy-and-verify
 skill governance (file structure check, post-deploy audit log verification).
 
-**root cause:** same as deviation 1. the plan correctly specified skill-based deployment,
+root cause: same as deviation 1. the plan correctly specified skill-based deployment,
 but execution defaulted to the direct command.
 
-**status:** open pattern. deployment succeeded and app is accessible.
+status: open pattern. deployment succeeded and app is accessible.
 
 ### deviation 3: files initially created in streamlit/ subdirectory
 
-**what happened:** the agent created `streamlit/dashboard.py` and `streamlit/environment.yml`
+what happened: the agent created `streamlit/dashboard.py` and `streamlit/environment.yml`
 instead of placing them in the project root.
 
-**root cause:** the agent's build plan step 2 specified creating a `streamlit/` directory.
+root cause: the agent's build plan step 2 specified creating a `streamlit/` directory.
 AGENTS.md did not have an explicit constraint against this at the time. the issue was
 corrected after deployment.
 
-**consequence:** initial deploy uploaded files from the wrong path. environment.yml was not
+consequence: initial deploy uploaded files from the wrong path. environment.yml was not
 visible in sis (warehouse runtime does not surface it). files were relocated and redeployed
 within the same session, after i requested the change.
 
-**status:** fixed within this run. AGENTS.md updated after the run (see section 8).
+status: fixed within this run. AGENTS.md updated after the run (see section 8).
 
 ### deviation 4: snowflake.yml required two fix cycles before deploy succeeded
 
-**what happened:** the initial snowflake.yml was created with the wrong structure for
+what happened: the initial snowflake.yml was created with the wrong structure for
 definition_version 2. first fix added the `entities:` wrapper but left an unsupported
 `env_file:` field. second fix removed `env_file`.
 
-**root cause:** the build-dashboard sub-skill scaffold output provided a template, but the
+root cause: the build-dashboard sub-skill scaffold output provided a template, but the
 agent reconstructed snowflake.yml from memory rather than copying the exact template.
 
-**status:** fixed within this run. three deploy attempts were needed.
+status: fixed within this run. three deploy attempts were needed.
 
 ---
 
@@ -242,7 +242,7 @@ produced here:
 
 ### skill file changes (applied before run 03)
 
-**`demos/renewal_radar_sis_dashboard/skills/sis-streamlit/skills/build-dashboard/SKILL.md`**
+`demos/renewal_radar_sis_dashboard/skills/sis-streamlit/skills/build-dashboard/SKILL.md`
 
 scan mode step 3 updated: added mandatory sql parameterization check:
 - grep for `session.sql(f` and inspect each match for IN-clause filter variable interpolation
@@ -250,7 +250,7 @@ scan mode step 3 updated: added mandatory sql parameterization check:
 - required fix: `session.table(...).filter(col(...).isin(whitelist_list))`
 - exception: constants `DATABASE`, `SCHEMA`, `APP_NAME` in f-string sql are allowed
 
-**`demos/renewal_radar_sis_dashboard/AGENTS.md`**
+`demos/renewal_radar_sis_dashboard/AGENTS.md`
 
 added "mandatory skill usage for scan and deploy" block to section 2:
 - explicitly forbids running `python -m py_compile` directly
@@ -265,11 +265,6 @@ required updating all hardcoded path references. files changed:
 `AGENTS.md`, `references/sis-file-structure.md`,
 `references/snowflake-yml-reference.md`, `references/snow-streamlit-cli.md`,
 `references/snowflake-sis-docs.md`, `skills/README.md`, `sis-dashboard/SKILL.md`
-
-### `build-dashboard/SKILL.md` - scaffold template: block comment labels
-
-removed `BLOCK N:` numbering prefix from all 9 block comments in the scaffold template.
-example: `# --- BLOCK 3: session and user context ---` -> `# --- session and user context ---`
 
 ### `build-dashboard/SKILL.md` - scaffold template: global filters
 
@@ -288,8 +283,8 @@ explicit normalization query, pandas transform, and altair encoding with all 4 o
 
 ## 9. executive summary
 
-- **deployment status:** successful. app deployed twice within the session (initial + post-relocation). app accessible at `CORTEX_DB.CORTEX_SCHEMA.RENEWAL_RADAR`; awaiting render confirmation.
-- **sql injection:** not caught during this run. scan ran as direct bash commands and missed the f-string IN-clause check. identified and fixed in run 03.
-- **file placement:** files initially created in `streamlit/` subdirectory; relocated to root and redeployed cleanly.
-- **snowflake.yml:** required two fix cycles before deploy succeeded (definition_version 2 format, unsupported env_file field).
-- **skill bypass pattern:** sis-streamlit loaded correctly; sub-skills read at session start; scan and deploy steps executed as direct bash commands. plan correctly specified skill-based commands but execution did not follow. same bypass pattern as run 01, different skill.
+- deployment status: successful. app deployed twice within the session (initial + post-relocation). app accessible at `CORTEX_DB.CORTEX_SCHEMA.RENEWAL_RADAR`; awaiting render confirmation.
+- sql injection: not caught during this run. scan ran as direct bash commands and missed the f-string IN-clause check. identified and fixed in run 03.
+- file placement: files initially created in `streamlit/` subdirectory; relocated to root and redeployed cleanly.
+- snowflake.yml: required two fix cycles before deploy succeeded (definition_version 2 format, unsupported env_file field).
+- skill bypass pattern: sis-streamlit loaded correctly; sub-skills read at session start; scan and deploy steps executed as direct bash commands. plan correctly specified skill-based commands but execution did not follow. same bypass pattern as run 01, different skill.

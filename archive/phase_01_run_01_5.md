@@ -57,31 +57,31 @@ the error and confirmed the correct rule. session ended.
 
 ### deviation 1: CREATE OR REPLACE TABLE used for AUDIT_LOG
 
-**what happened:** agent used `CREATE OR REPLACE TABLE` instead of `CREATE OR ALTER TABLE`.
+what happened: agent used `CREATE OR REPLACE TABLE` instead of `CREATE OR ALTER TABLE`.
 
-**root cause:** `CREATE OR REPLACE` is the dominant pattern in snowflake training data.
+root cause: `CREATE OR REPLACE` is the dominant pattern in snowflake training data.
 the rule was present in AGENTS.md but not visually prominent - it appeared as prose in a section header,
 not as a dedicated callout block near the ddl.
 
-**consequence:** the `AUDIT_LOG` table was dropped and recreated. since it was empty (new session),
+consequence: the `AUDIT_LOG` table was dropped and recreated. since it was empty (new session),
 no data was lost in this run. in a resumed session this would destroy existing audit rows.
 
-**status:** addressed - see section 4.
+status: addressed - see section 4.
 
 ---
 
 ### deviation 2: manual commands after skill completion
 
-**what happened:** after both session-start skills completed, the agent ran manual `snow` cli
+what happened: after both session-start skills completed, the agent ran manual `snow` cli
 and `snow sql` context queries that the skills had already covered.
 
-**root cause:** the skill constraints were in a table column ("constraint") which has lower
+root cause: the skill constraints were in a table column ("constraint") which has lower
 visual weight than a callout block.
 
-**consequence:** no data corruption, but skill governance was bypassed. the session-start
+consequence: no data corruption, but skill governance was bypassed. the session-start
 gate in AGENTS.md is intended to prevent exactly this pattern.
 
-**status:** addressed - see section 4.
+status: addressed - see section 4.
 
 ---
 
@@ -89,7 +89,7 @@ gate in AGENTS.md is intended to prevent exactly this pattern.
 
 five changes were applied in a follow-up repository maintenance session (outside cortex code cli).
 
-**change 1: ddl callout blocks added**
+change 1: ddl callout blocks added
 
 two `> **DDL rule - no exceptions:**` callout blocks added - one before source table ddl,
 one before logging infrastructure ddl. each block states the rule explicitly and explains
@@ -97,13 +97,13 @@ why it matters (data destruction). the second callout also clarifies:
 - `CREATE OR ALTER VIEW` does not exist in snowflake - views use `CREATE OR REPLACE VIEW` (safe, no data)
 - `LOG_AUDIT_EVENT` procedure uses `CREATE OR REPLACE PROCEDURE` - intentional and correct
 
-**change 2: V_APP_EVENTS ddl corrected**
+change 2: V_APP_EVENTS ddl corrected
 
 `CREATE OR ALTER VIEW` changed to `CREATE OR REPLACE VIEW`. this was the direct cause of the
 "malformed view" error seen in previous sessions - `CREATE OR ALTER VIEW` is not a valid
 snowflake syntax. views do not store data, so replacing them is always safe.
 
-**change 3: page 1 kpi column names corrected**
+change 3: page 1 kpi column names corrected
 
 the dashboard spec for page 1 referenced two columns that do not exist in `FACT_RENEWAL`:
 - `quote_status` - does not exist; correct columns are `is_quoted` and `is_bound`
@@ -111,13 +111,13 @@ the dashboard spec for page 1 referenced two columns that do not exist in `FACT_
 
 formulas corrected to match both the source table schema and the "key business metrics" section.
 
-**change 4: stage ddl section added**
+change 4: stage ddl section added
 
 `CREATE STAGE IF NOT EXISTS {database}.{schema}.{stage}` was only mentioned conditionally in the
 data loading instructions. a dedicated `## stage (create in phase 1)` section added between
 `RENEWAL_FLAGS` and logging infrastructure, with confirmation query.
 
-**change 5: skills constraints and sis forbidden patterns restructured**
+change 5: skills constraints and sis forbidden patterns restructured
 
 both sections were converted from table columns (low visual weight) to dedicated `> **...:**`
 callout blocks placed immediately after the relevant reference table. each constraint is now
@@ -129,21 +129,21 @@ a clearly separated bullet point with explicit "do NOT" language.
 
 one change was applied to the skill library in a follow-up repository maintenance session (outside cortex code cli).
 
-**change 1: connections.toml renamed to config.toml in all skill files**
+change 1: connections.toml renamed to config.toml in all skill files
 
-**what happened:** `snow connection list` failed with `'String' object has no attribute 'items'`
+what happened: `snow connection list` failed with `'String' object has no attribute 'items'`
 during the `check-local-environment` run. the error was caused by `default_connection_name`
 being present in `~/.snowflake/connections.toml` - snow cli 3.x only supports this key in
 `~/.snowflake/config.toml`. the file had to be renamed to fix the issue.
 
-**files updated:**
+files updated:
 - `skills/check-local-environment/SKILL.md` - all references (stat path, chmod path, error guidance, success criteria)
 - `skills/check-snowflake-context/SKILL.md` - description
 - `skills/sis-dashboard/SKILL.md` - routing table + workflow sequence
 - `skills/README.md` - check-local-environment description
 - `skills/developing-with-streamlit/skills/deploy-and-verify/references/snow-streamlit-cli.md` - `--connection` flag description and notes section
 
-**root cause:** snow cli 3.x expects `config.toml` as the main config file. `connections.toml`
+root cause: snow cli 3.x expects `config.toml` as the main config file. `connections.toml`
 is a legacy name that does not support top-level keys like `default_connection_name`.
 when snow cli reads `connections.toml` and finds that key as a string, calling `.items()` on it fails.
 

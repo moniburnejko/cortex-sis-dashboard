@@ -17,7 +17,7 @@ mandatory corrections to skill files and AGENTS.md, then re-executed with two ag
 phase 2 builds and deploys the 3-page streamlit in snowflake dashboard.
 it is a single prompt (prompt 3) with a checkpoint before phase 3 begins.
 
-- **prompt 3 (dashboard build and deploy):**
+- prompt 3 (dashboard build and deploy):
   - enter `/plan` before pasting the prompt (required per prompts.md)
   - load sis patterns via `$ sis-streamlit` before planning
   - scaffold structure via `$ sis-streamlit` -> `build-dashboard` (no args)
@@ -28,9 +28,9 @@ it is a single prompt (prompt 3) with a checkpoint before phase 3 begins.
   - stop after showing the app url and wait for confirmation
 
 this run consisted of a planning phase followed by two agent sessions:
-- **planning phase** (pre-session): agent analyzed run 02 output, proposed build plan, mandatory corrections were added, skill files updated
-- **session 1**: complete rewrite of dashboard.py, deployment attempted - issues discovered
-- **session 2**: prior issues fixed, sql injection remediated, successful re-deployment
+- planning phase (pre-session): agent analyzed run 02 output, proposed build plan, mandatory corrections were added, skill files updated
+- session 1: complete rewrite of dashboard.py, deployment attempted - issues discovered
+- session 2: prior issues fixed, sql injection remediated, successful re-deployment
 
 ---
 
@@ -50,12 +50,12 @@ that all 3 pages render correctly.
 during the planning phase the agent proposed a build plan with two problems that were
 corrected via review notes before execution began:
 
-1. **sql injection marked as optional:** the plan rated sql injection risk as "MEDIUM" with
+1. sql injection marked as optional: the plan rated sql injection risk as "MEDIUM" with
    a note that the fix was optional. this was incorrect. AGENTS.md section 2 states
    "parameterized sql only" and section 3 provides the exact whitelist pattern. the fix
    was made mandatory before the session ran.
 
-2. **direct commands instead of skills for scan and deploy:** the plan listed
+2. direct commands instead of skills for scan and deploy: the plan listed
    `python3 -m py_compile` for scan and `snow streamlit deploy --replace` for deployment.
    AGENTS.md forbids running these directly - both must go through
    `$ sis-streamlit` -> `build-dashboard` and `$ sis-streamlit` -> `deploy-and-verify`.
@@ -115,11 +115,11 @@ for scan and deploy. skill files were updated (see section 8) and the run procee
 
 ### session 1: skills loaded, dashboard rewritten, deployment bypassed skills
 
-**skills invoked:**
+skills invoked:
 - `$ sis-streamlit` (read, loaded correctly)
 - sub-skills read directly: sis-patterns, brand-identity, build-dashboard, deploy-and-verify
 
-**what the agent did:**
+what the agent did:
 
 1. loaded sis-streamlit skill and three sub-skills before writing any code
 2. rewrote dashboard.py from scratch (474 lines, replacing prior version)
@@ -133,7 +133,7 @@ for scan and deploy. skill files were updated (see section 8) and the run procee
 6. deployed with `snow streamlit deploy --replace` directly
 7. reported app url and waited for confirmation
 
-**issues discovered after deployment:**
+issues discovered after deployment:
 
 - observed: no environment.yml visible in sis project
 - app showed a react error loop: `Maximum update depth exceeded`
@@ -144,11 +144,11 @@ for scan and deploy. skill files were updated (see section 8) and the run procee
 
 a new cortex session was started after stopping the first one.
 
-**skills invoked:**
+skills invoked:
 - `$ sis-streamlit` (read, loaded correctly)
 - sub-skills read: build-dashboard (scan), deploy-and-verify (deploy)
 
-**what the agent did:**
+what the agent did:
 
 1. checked memory (no relevant prior state)
 2. read AGENTS.md, snowflake.yml, dashboard.py
@@ -173,7 +173,7 @@ a new cortex session was started after stopping the first one.
 13. verified snowflake.yml and current role (CORTEX_ADMIN)
 14. deployed with `snow streamlit deploy --replace`
 
-**deployment result:**
+deployment result:
 
 ```
 status: success
@@ -206,68 +206,68 @@ agent reported the url and stopped, waiting for confirmation that all 3 pages re
 
 ### deviation 1: scan and deploy run as direct commands in both sessions
 
-**what happened:** in both sessions, the agent read the build-dashboard and deploy-and-verify
+what happened: in both sessions, the agent read the build-dashboard and deploy-and-verify
 sub-skills but then executed their steps as direct bash commands rather than through the
 `$ sis-streamlit` skill dispatch mechanism. this was the same issue flagged in the planning
 phase review notes.
 
-**root cause:** skill files contain checklists and instructions, not executable wrappers.
+root cause: skill files contain checklists and instructions, not executable wrappers.
 reading a skill file and following its steps manually is indistinguishable from the agent's
 perspective from "running the skill." the prohibition in AGENTS.md says "do NOT run
 `snow streamlit deploy` directly" and "must go through `$ sis-streamlit` -> `deploy-and-verify`"
 but the agent interprets "go through the skill" as "read the skill file and follow it" -
 which is what it did. the agent sees no mechanical difference between the two paths.
 
-**consequence in session 1:** the scan followed the build-dashboard checklist but the
+consequence in session 1: the scan followed the build-dashboard checklist but the
 sql injection check (added to build-dashboard in the planning phase) was not applied - the
 agent ran generic grep patterns, not the specific f-string IN-clause check from the skill.
 sql injection was not caught in session 1.
 
-**consequence in session 2:** the scan DID apply the f-string IN-clause check (grep for
+consequence in session 2: the scan DID apply the f-string IN-clause check (grep for
 `session.sql(f`) and found and fixed sql injection before deploying. the governance intent
 was upheld even though the mechanism was direct commands.
 
-**status:** skill mechanism bypass is a known open pattern. the governance outcome in
+status: skill mechanism bypass is a known open pattern. the governance outcome in
 session 2 was correct. the root cause (no mechanical enforcement of skill dispatch vs.
 direct commands) remains unresolved.
 
 ### deviation 2: environment.yml created in session 1
 
-**what happened:** session 1 wrote an environment.yml file. AGENTS.md states "do NOT create.
+what happened: session 1 wrote an environment.yml file. AGENTS.md states "do NOT create.
 sis warehouse runtime has pre-installed packages."
 
-**root cause:** the agent either did not read the relevant AGENTS.md section before writing
+root cause: the agent either did not read the relevant AGENTS.md section before writing
 environment.yml or the note was not sufficiently prominent during the code generation step.
 
-**consequence:** environment.yml was uploaded with deployment but unused. caused confusion
+consequence: environment.yml was uploaded with deployment but unused. caused confusion
 when the file was not visible in the sis project ui. the react error loop
 (`Maximum update depth exceeded`) observed after session 1 deployment was unrelated.
 
-**fix (within this run):** environment.yml was deleted in session 2 based on the AGENTS.md
+fix (within this run): environment.yml was deleted in session 2 based on the AGENTS.md
 constraint "do NOT create. sis warehouse runtime has pre-installed packages."
 
-**correction (post-run):** the constraint was wrong. environment.yml IS uploaded on first
+correction (post-run): the constraint was wrong. environment.yml IS uploaded on first
 deploy and stays in the snowflake stage; subsequent differential deploys skip it only when
 unchanged (which caused the agent in run 02 to conclude it was not uploaded). deleting it
 broke the streamlit version pin. all files were restored after this run and AGENTS.md was
 corrected - see post-run changes in section 8.
 
-**status:** incorrectly fixed within this run; reverted after this run.
+status: incorrectly fixed within this run; reverted after this run.
 
 ### deviation 3: chart 3 and navigation issues survived into session 2
 
-**what happened:** session 1 rewrote dashboard.py but introduced (or carried over) two
+what happened: session 1 rewrote dashboard.py but introduced (or carried over) two
 spec violations: navigation radio placed after filters header, and stacked bar chart
 using python normalization instead of altair `stack="normalize"`.
 
-**root cause:** session 1 loaded brand-identity and build-dashboard skills before writing
+root cause: session 1 loaded brand-identity and build-dashboard skills before writing
 but did not have the final corrected spec for chart 3 normalization (the planning phase
 had identified this issue in the pre-existing file, but session 1 rewrote the file and
 reintroduced it). navigation placement was likely missed during the rewrite.
 
-**consequence:** session 2 had to identify and fix both issues before deploying.
+consequence: session 2 had to identify and fix both issues before deploying.
 
-**status:** fixed in session 2 before deployment.
+status: fixed in session 2 before deployment.
 
 ---
 
@@ -288,7 +288,7 @@ reintroduced it). navigation placement was likely missed during the rewrite.
 
 ### changes made during planning phase (before sessions)
 
-**`demos/renewal_radar_sis_dashboard/skills/sis-streamlit/skills/build-dashboard/SKILL.md`**
+`demos/renewal_radar_sis_dashboard/skills/sis-streamlit/skills/build-dashboard/SKILL.md`
 
 scan mode step 3 updated: added mandatory sql parameterization check:
 - grep for `session.sql(f` and inspect each match for IN-clause filter variable interpolation
@@ -296,7 +296,7 @@ scan mode step 3 updated: added mandatory sql parameterization check:
 - required fix: `session.table(...).filter(col(...).isin(whitelist_list))`
 - exception: constants `DATABASE`, `SCHEMA`, `APP_NAME` in f-string sql are allowed
 
-**`demos/renewal_radar_sis_dashboard/AGENTS.md`**
+`demos/renewal_radar_sis_dashboard/AGENTS.md`
 
 added "mandatory skill usage for scan and deploy" block to section 2:
 - explicitly forbids running `python -m py_compile` directly as a substitute for the scan skill
@@ -305,12 +305,12 @@ added "mandatory skill usage for scan and deploy" block to section 2:
 
 ### changes made to dashboard.py during sessions
 
-**session 1:** complete rewrite (474 lines)
+session 1: complete rewrite (474 lines)
 - all 3 pages implemented from spec: kpi overview, premium pressure, activity log
 - `@st.cache_data` and `get_active_session()` patterns applied correctly
 - altair charts with correct sis 1.52.* compatible encoding
 
-**session 2:** targeted fixes applied to session 1 output
+session 2: targeted fixes applied to session 1 output
 - navigation placement: `st.sidebar.radio("Navigation", ...)` moved to before "Filters" header
 - stacked bar chart: python `pct` column calculation removed; altair `stack="normalize"` used instead
 - flag submission sql injection: whitelist validation added for `flag_region`, `flag_segment`, `flag_channel`
@@ -327,7 +327,7 @@ added "mandatory skill usage for scan and deploy" block to section 2:
 visual and functional issues were observed in the deployed dashboard after this run.
 the following changes were applied to skill files and AGENTS.md:
 
-**`AGENTS.md` + `build-dashboard/SKILL.md` - chart 3: gaps in proportional stacked bar**
+`AGENTS.md` + `build-dashboard/SKILL.md` - chart 3: gaps in proportional stacked bar
 
 gaps visible before some segment bars (HOME, PERSONAL_AUTO) were caused by floating-point
 precision errors in the python normalization step. when `df["pct"]` values do not sum to
@@ -338,18 +338,18 @@ in the altair X encoding with raw count `n:Q`. altair guarantees exact 100% fill
 also changed `alt.Y` sort from `sort="-x"` (ambiguous for 100% bars) to
 `sort=alt.EncodingSortField("n", op="sum", order="descending")`.
 
-**`AGENTS.md` + `build-dashboard/SKILL.md` - scaffold template: navigation order**
+`AGENTS.md` + `build-dashboard/SKILL.md` - scaffold template: navigation order
 
 navigation radio was placed after the Filters header in the sidebar. added explicit spec note:
 navigation at the very top of the sidebar, above Filters. also updated scaffold template to
 reflect the correct order.
 
-**`AGENTS.md` + `build-dashboard/SKILL.md` - scaffold template: date range picker**
+`AGENTS.md` + `build-dashboard/SKILL.md` - scaffold template: date range picker
 
 added explicit constraint: `st.date_input` MUST receive `value` as a tuple `(start, end)` to
 activate range picker mode. a single date value renders a single-date picker instead.
 
-**`AGENTS.md` - chart 3: stacking order and percentage tooltips**
+`AGENTS.md` - chart 3: stacking order and percentage tooltips
 
 `stack="normalize"` does not control stacking order. without `alt.Order`, RENEWED was stacked
 last (rightmost), making the chart appear to start from 100%. fix: added
@@ -357,20 +357,20 @@ last (rightmost), making the chart appear to start from 100%. fix: added
 also added explicit tooltip spec: `alt.Tooltip("pct:Q", format=".1%", title="share")` with a
 python-computed `pct` column for display only (not used in X encoding).
 
-**`AGENTS.md` + `sis-patterns/SKILL.md` - heatmap: uppercase column names from snowflake**
+`AGENTS.md` + `sis-patterns/SKILL.md` - heatmap: uppercase column names from snowflake
 
 `session.sql(...).to_pandas()` returns UPPERCASE column names (`PRICE_SHOCK_BAND`, not
 `price_shock_band`). dashboard code used lowercase names, causing `KeyError`. fix: added
 note to AGENTS.md heatmap spec to call `.rename(columns=str.lower)` after `.to_pandas()`.
 also added a new pattern entry to `sis-patterns/SKILL.md` section 7.
 
-**`AGENTS.md` - page 3: review flags text search clarification**
+`AGENTS.md` - page 3: review flags text search clarification
 
 spec said "text search on FLAG_REASON" without clarifying it is a widget above the table, not
 a table column. agent added a "search reason" column instead. fix: rephrased to explicitly
 state `st.text_input` above the table, filters rows client-side; do NOT add a column.
 
-**`AGENTS.md` + `build-dashboard/SKILL.md` - sidebar date filter: two separate widgets**
+`AGENTS.md` + `build-dashboard/SKILL.md` - sidebar date filter: two separate widgets
 
 replaced single `st.date_input` range picker (awkward in sis sidebar) with two separate
 `st.date_input` widgets: "Renewal date from" and "Renewal date to". added `format="YYYY-MM-DD"`
@@ -378,7 +378,7 @@ to both to fix `2025/08/12` display format bug.
 
 files also changed: `brand-identity/SKILL.md` (filter label conventions).
 
-**environment.yml: reverted incorrect removal + post-deploy verification added**
+environment.yml: reverted incorrect removal + post-deploy verification added
 
 the AGENTS.md constraint "do NOT create environment.yml" was wrong. environment.yml IS
 required at project root for streamlit version pinning. it is uploaded on first deploy and
@@ -396,10 +396,10 @@ files changed: `build-dashboard/SKILL.md`, `AGENTS.md`, `deploy-and-verify/SKILL
 
 ## 9. executive summary
 
-- **deployment status:** successful. app accessible at `CORTEX_DB.CORTEX_SCHEMA.RENEWAL_RADAR`; awaiting render confirmation for all 3 pages.
-- **sql injection:** found and fixed in session 2. flag submission and heatmap query both remediated with whitelist validation and snowpark DataFrame api before deployment.
-- **spec violations in-run:** chart 3 normalization, navigation placement fixed before final deployment. environment.yml deleted based on incorrect AGENTS.md constraint.
-- **environment.yml:** deleted in session 2 (per AGENTS.md "do NOT create"). this was wrong - environment.yml is required for version pinning. AGENTS.md constraint was itself incorrect. all changes reverted after this run.
-- **post-run spec corrections:** 7 issues observed in deployed dashboard triggered updates to AGENTS.md, build-dashboard/SKILL.md, deploy-and-verify/SKILL.md, sis-patterns/SKILL.md, and references (chart stacking order, date filter widgets, heatmap column names, review flags, environment.yml restore).
-- **skill bypass pattern:** both sessions read the required skills but executed scan and deploy steps as direct bash commands. governance content was followed (sql injection correctly caught in session 2), but the dispatch mechanism was not used. same open pattern as run 02.
-- **session split:** two agent sessions were required. session 1 produced a working build but missed sql injection and created environment.yml. session 2 applied corrective fixes and re-deployed cleanly.
+- deployment status: successful. app accessible at `CORTEX_DB.CORTEX_SCHEMA.RENEWAL_RADAR`; awaiting render confirmation for all 3 pages.
+- sql injection: found and fixed in session 2. flag submission and heatmap query both remediated with whitelist validation and snowpark DataFrame api before deployment.
+- spec violations in-run: chart 3 normalization, navigation placement fixed before final deployment. environment.yml deleted based on incorrect AGENTS.md constraint.
+- environment.yml: deleted in session 2 (per AGENTS.md "do NOT create"). this was wrong - environment.yml is required for version pinning. AGENTS.md constraint was itself incorrect. all changes reverted after this run.
+- post-run spec corrections: 7 issues observed in deployed dashboard triggered updates to AGENTS.md, build-dashboard/SKILL.md, deploy-and-verify/SKILL.md, sis-patterns/SKILL.md, and references (chart stacking order, date filter widgets, heatmap column names, review flags, environment.yml restore).
+- skill bypass pattern: both sessions read the required skills but executed scan and deploy steps as direct bash commands. governance content was followed (sql injection correctly caught in session 2), but the dispatch mechanism was not used. same open pattern as run 02.
+- session split: two agent sessions were required. session 1 produced a working build but missed sql injection and created environment.yml. session 2 applied corrective fixes and re-deployed cleanly.

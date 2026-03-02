@@ -25,14 +25,14 @@ generates a final acceptance assessment.
 this run also includes prompt 5 (post-deployment security scan), a new prompt added to
 prompts.md after code_review_dashboard.md identified issues not caught by prior scans.
 
-- **prompt 4 (full acceptance check):**
+- prompt 4 (full acceptance check):
   - invoke gate skills (first time included as explicit instruction in prompt text)
   - run deploy-and-verify SKILL.md for verification steps
   - run all 16 done criteria checks via sql
   - mark manual app-renders criterion as confirmed (pre-verified)
   - report any failures; wait for decision
 
-- **prompt 5 (post-deployment security scan):**
+- prompt 5 (post-deployment security scan):
   - invoke `$ sis-streamlit` -> `build-dashboard dashboard.py` (full scan mode)
   - report all issues including DML injection, audit event presence, session.call count, forbidden patterns
   - do not fix; wait for decision
@@ -87,7 +87,7 @@ note: prompt 5 did not include the gate instruction. the gate did not run before
 
 ### phase 3 done criteria (16 checks)
 
-**phase 1 (8 checks):**
+phase 1 (8 checks):
 
 | # | criterion | expected |
 |---|---|---|
@@ -100,7 +100,7 @@ note: prompt 5 did not include the gate instruction. the gate did not run before
 | 7 | LOG_AUDIT_EVENT procedure exists | 1 |
 | 8 | agent logged at least one event | >= 1 |
 
-**phase 2 (3 checks):**
+phase 2 (3 checks):
 
 | # | criterion | expected |
 |---|---|---|
@@ -108,7 +108,7 @@ note: prompt 5 did not include the gate instruction. the gate did not run before
 | 10 | no python syntax errors | exit code 0 |
 | 11 | app renders with data (manual) | confirmed |
 
-**phase 3 (5 checks):**
+phase 3 (5 checks):
 
 | # | criterion | expected |
 |---|---|---|
@@ -161,7 +161,7 @@ phase-by-phase sql check list.
 
 #### all 16 checks run via SNOWFLAKE_SQL_EXECUTE
 
-**phase 1 results (8 checks):**
+phase 1 results (8 checks):
 
 | # | criterion | actual value | required | result |
 |---|---|---|---|---|
@@ -174,7 +174,7 @@ phase-by-phase sql check list.
 | 7 | LOG_AUDIT_EVENT procedure exists | 1 | 1 | PASS (via bash grep) |
 | 8 | agent logged at least one event | 2 | >= 1 | PASS |
 
-**phase 2 results (3 checks):**
+phase 2 results (3 checks):
 
 | # | criterion | actual value | required | result |
 |---|---|---|---|---|
@@ -185,7 +185,7 @@ phase-by-phase sql check list.
 note on criterion 9: `snow streamlit list | grep -i "renewal_radar"` failed with exit code 1.
 agent recovered by running `snow streamlit list` without grep. RENEWAL_RADAR confirmed present.
 
-**phase 3 results (5 checks):**
+phase 3 results (5 checks):
 
 | # | criterion | actual value | required | result |
 |---|---|---|---|---|
@@ -289,56 +289,56 @@ SCAN SUMMARY: NO ISSUES FOUND - PRODUCTION SECURE
 
 ### deviation 1: verification checks ran as direct SNOWFLAKE_SQL_EXECUTE (prompt 4)
 
-**what happened:** deploy-and-verify SKILL.md was read, but all 16 acceptance checks ran
+what happened: deploy-and-verify SKILL.md was read, but all 16 acceptance checks ran
 as direct SNOWFLAKE_SQL_EXECUTE calls rather than via the skill invocation mechanism.
 
-**root cause:** same as all prior runs - skills are markdown checklists, not executable
+root cause: same as all prior runs - skills are markdown checklists, not executable
 wrappers. the agent reads the skill and follows the steps using available tools.
 
-**consequence:** no correctness impact. all 16 checks were run and results were accurate.
+consequence: no correctness impact. all 16 checks were run and results were accurate.
 
-**status:** open pattern.
+status: open pattern.
 
 ### deviation 2: security scan ran as direct bash (prompt 5)
 
-**what happened:** build-dashboard SKILL.md was read, but the scan ran as direct bash
+what happened: build-dashboard SKILL.md was read, but the scan ran as direct bash
 commands rather than via the skill invocation mechanism.
 
-**root cause:** same mechanism bypass as deviation 1.
+root cause: same mechanism bypass as deviation 1.
 
-**consequence:** no correctness impact. all required scan checks were run and results were
+consequence: no correctness impact. all required scan checks were run and results were
 accurate. the scan correctly identified 0 DML violations, 3 safe f-string SELECT patterns,
 and all audit event types present.
 
-**status:** open pattern.
+status: open pattern.
 
 ### deviation 3: grep exit code 1 for zero-match patterns (both prompts)
 
-**what happened:** grep exits with code 1 when no matches are found. this caused several
+what happened: grep exits with code 1 when no matches are found. this caused several
 bash commands (checking for forbidden patterns, DML violations) to be reported as failed
 by the tool, even when a count of 0 is the expected result. the same pattern occurred
 during the phase_02_run_05 pre-deploy scan.
 
-**root cause:** standard unix grep behavior. the agent correctly interpreted all zero-match
+root cause: standard unix grep behavior. the agent correctly interpreted all zero-match
 results as passing checks.
 
-**consequence:** no correctness impact. the agent handled the exit codes correctly.
+consequence: no correctness impact. the agent handled the exit codes correctly.
 
-**status:** recurring pattern. not a correctness issue.
+status: recurring pattern. not a correctness issue.
 
 ### deviation 4: gate not invoked for prompt 5
 
-**what happened:** prompt 5 did not include the gate instruction text. the gate did not run.
+what happened: prompt 5 did not include the gate instruction text. the gate did not run.
 the agent went directly to reading build-dashboard SKILL.md.
 
-**root cause:** prompt 5 was not updated in prompts.md to include the gate instruction. only
+root cause: prompt 5 was not updated in prompts.md to include the gate instruction. only
 prompts 1-4 were updated (though prompt 3 was the first to be used in this session with the
 gate instruction, and prompt 4 included it explicitly).
 
-**consequence:** no practical impact (context unchanged between prompts 4 and 5 in the same
+consequence: no practical impact (context unchanged between prompts 4 and 5 in the same
 session). however, prompts.md should include the gate instruction in all prompts.
 
-**status:** open. prompts.md should be updated to add the gate instruction to prompt 5.
+status: open. prompts.md should be updated to add the gate instruction to prompt 5.
 
 ---
 
@@ -360,10 +360,10 @@ session). however, prompts.md should include the gate instruction in all prompts
 
 ## 8. executive summary
 
-- **gate (prompt 4):** ran automatically without intervention - the first time in this project. root cause: "invoke $ check-local-environment, then $ check-snowflake-context. do not proceed until both pass." in the prompt text.
-- **gate (prompt 5):** did not run. prompt 5 text did not include the gate instruction.
-- **16/16 acceptance criteria:** all passed on first attempt with genuine data. no stale data issues.
-- **FILTER_CHANGE:** 6 events logged in the last hour - confirmed genuine, from current dashboard.py callbacks (log_filter_change_p1 and log_filter_change_p2). prior run's 30 FILTER_CHANGE events were stale.
-- **security scan:** clean. 0 DML injection violations, 3 safe f-string SELECT patterns (constants only), all audit event types present in code, all forbidden patterns absent, python syntax valid.
-- **remaining open:** scan mechanism still runs as direct bash (not via skill invocation). gate not in prompt 5 text. neither is a correctness issue - the scan results are accurate.
-- **all issues from code_review_dashboard.md resolved:** sql injection (INSERT/UPDATE), FILTER_CHANGE logging, flag_id return. remaining open items (heatmap filter gap, outcome color duplication) were not addressed in run 05 and remain open.
+- gate (prompt 4): ran automatically without intervention - the first time in this project. root cause: "invoke $ check-local-environment, then $ check-snowflake-context. do not proceed until both pass." in the prompt text.
+- gate (prompt 5): did not run. prompt 5 text did not include the gate instruction.
+- 16/16 acceptance criteria: all passed on first attempt with genuine data. no stale data issues.
+- FILTER_CHANGE: 6 events logged in the last hour - confirmed genuine, from current dashboard.py callbacks (log_filter_change_p1 and log_filter_change_p2). prior run's 30 FILTER_CHANGE events were stale.
+- security scan: clean. 0 DML injection violations, 3 safe f-string SELECT patterns (constants only), all audit event types present in code, all forbidden patterns absent, python syntax valid.
+- remaining open: scan mechanism still runs as direct bash (not via skill invocation). gate not in prompt 5 text. neither is a correctness issue - the scan results are accurate.
+- all issues from code_review_dashboard.md resolved: sql injection (INSERT/UPDATE), FILTER_CHANGE logging, flag_id return. remaining open items (heatmap filter gap, outcome color duplication) were not addressed in run 05 and remain open.

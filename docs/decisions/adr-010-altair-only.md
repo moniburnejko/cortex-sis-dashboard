@@ -13,9 +13,9 @@ altair for all charts without exception. native streamlit chart functions (`st.b
 
 ## alternatives considered
 
-- **native streamlit charts with custom css**: custom css injection is not available in sis. rejected: not feasible.
-- **plotly**: feature-rich, but not available via the anaconda channel in the version of the environment used by the project. rejected: dependency not available.
-- **matplotlib / seaborn**: static image output; poor interactivity in sis. rejected: inferior ux.
+- native streamlit charts with custom css: custom css injection is not available in sis. rejected: not feasible.
+- plotly: feature-rich, but not available via the anaconda channel in the version of the environment used by the project. rejected: dependency not available.
+- matplotlib / seaborn: static image output; poor interactivity in sis. rejected: inferior ux.
 
 ## consequences
 

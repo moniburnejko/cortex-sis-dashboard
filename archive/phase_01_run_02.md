@@ -11,13 +11,13 @@
 
 phase 1 establishes everything needed before any dashboard code is written:
 
-- **prompt 1 (infrastructure):**
+- prompt 1 (infrastructure):
   - create logging objects: `APP_EVENTS`, `AUDIT_LOG`, `V_APP_EVENTS`, `LOG_AUDIT_EVENT`
   - create domain table: `RENEWAL_FLAGS`
   - create stage: `STAGE_RAW_CSV`
   - create 3 source tables: `FACT_RENEWAL`, `FACT_PREMIUM_EVENT`, `DIM_POLICY`
   - no data loaded yet
-- **prompt 2 (data load):**
+- prompt 2 (data load):
   - validate 3 local csv files
   - load them into the source tables via PUT and COPY INTO
   - log the operation
@@ -104,7 +104,7 @@ WHERE action_category='AGENT_OPERATION';        -- expect >= 1
 
 both session-start skills were invoked in the correct order.
 
-**`$ check-local-environment` - invoked**
+`$ check-local-environment` - invoked
 
 | step | command | result |
 |---|---|---|
@@ -117,7 +117,7 @@ both session-start skills were invoked in the correct order.
 all 5 steps completed. minor: python checked first instead of last (step order inverted vs skill spec).
 outcome identical.
 
-**`$ check-snowflake-context` - invoked**
+`$ check-snowflake-context` - invoked
 
 | step | command | result |
 |---|---|---|
@@ -177,7 +177,7 @@ the agent presented a 3-option menu which is a superset of that. no deviation.
 
 both skills invoked again in the new session, in the correct order.
 
-**`$ check-local-environment` - invoked**
+`$ check-local-environment` - invoked
 
 | step | command | result |
 |---|---|---|
@@ -191,7 +191,7 @@ both skills invoked again in the new session, in the correct order.
 note: `python --version` failed (not found), agent retried with `python3 --version` - correct fallback
 per skill step 5.
 
-**`$ check-snowflake-context` - invoked**
+`$ check-snowflake-context` - invoked
 
 | setting | expected | actual | match |
 |---|---|---|---|
@@ -209,7 +209,7 @@ schema, stage, and `AUDIT_LOG` all confirmed. session start gate passed.
 
 `$ prepare-data` invoked. full workflow executed.
 
-**step 1-4: validation**
+step 1-4: validation
 
 | file | size | encoding | headers | rows | oversized | status |
 |---|---|---|---|---|---|---|
@@ -220,7 +220,7 @@ schema, stage, and `AUDIT_LOG` all confirmed. session start gate passed.
 validation method: `file` (encoding), `head -1` (headers), `python3 -c csv.reader` (row count).
 all checks passed.
 
-**step 5: compression**
+step 5: compression
 
 ```
 gzip -k data/fact_renewal.csv
@@ -230,12 +230,12 @@ gzip -k data/dim_policy.csv
 
 output confirmed: dim_policy.csv.gz (851K), fact_premium_event.csv.gz (2.0M), fact_renewal.csv.gz created.
 
-**step 6: PUT**
+step 6: PUT
 
 all 3 .gz files uploaded to `@CORTEX_DB.CORTEX_SCHEMA.STAGE_RAW_CSV`. commands truncated in
 transcript but .gz files used - `AUTO_COMPRESS=FALSE` assumed (pre-compressed files).
 
-**agent decision: TRUNCATE before reload**
+agent decision: TRUNCATE before reload
 
 "start fresh" (option 3) was chosen. the agent truncated all 3 tables before loading:
 ```sql
@@ -247,7 +247,7 @@ TRUNCATE TABLE CORTEX_DB.CORTEX_SCHEMA.FACT_PREMIUM_EVENT;
 prepare-data skill says "ask the user before force-reloading." explicit permission was given via
 option 3. truncate was justified.
 
-**step 7: COPY INTO**
+step 7: COPY INTO
 
 | file | rows_loaded | errors | status |
 |---|---|---|---|
@@ -255,7 +255,7 @@ option 3. truncate was justified.
 | fact_premium_event.csv.gz | 94,642 | 0 | LOADED |
 | fact_renewal.csv.gz | 50,000 | 0 | LOADED |
 
-**step 8: row count verification**
+step 8: row count verification
 
 | table | expected | actual | tolerance |
 |---|---|---|---|
@@ -324,20 +324,20 @@ skills invoked: 2/2 for prompt 1, 4/4 for prompt 2.
 
 ### deviation 1: post-ddl verification queries run manually (prompt 1)
 
-**what happened:** the agent ran object existence queries (SHOW, SELECT COUNT, INFORMATION_SCHEMA)
+what happened: the agent ran object existence queries (SHOW, SELECT COUNT, INFORMATION_SCHEMA)
 to report what was created, without invoking `$ sis-dashboard deploy-and-verify`.
 
-**assessment:** acceptable. the updated prompt 1 says "stop and report what was created. do not run
+assessment: acceptable. the updated prompt 1 says "stop and report what was created. do not run
 the phase 1 acceptance checks." the agent correctly did NOT run the formal acceptance checks.
 the existence queries are a reporting step, not the done-criteria sweep. acceptable behavior.
 
-**status:** no action needed.
+status: no action needed.
 
 ---
 
 ### deviation 2: ASK_USER_QUESTION for phase selection (prompt 2)
 
-**what happened:** after `$ sis-dashboard` was loaded, the agent displayed a question asking which
+what happened: after `$ sis-dashboard` was loaded, the agent displayed a question asking which
 phase to verify (phase-1 / phase-2 / phase-3 / something else). the prompt had explicitly stated
 "phase 1 acceptance checks."
 
@@ -350,20 +350,20 @@ The sis-dashboard skill is loaded. Which phase verification would you like to ru
   Something else
 ```
 
-**root cause:** sis-dashboard stopping points says "confirm which phase the user wants to work on
+root cause: sis-dashboard stopping points says "confirm which phase the user wants to work on
 if intent is unclear." the agent did not apply the "if intent is unclear" condition - it asked
 regardless.
 
-**consequence:** unnecessary interaction. phase 1 had to be selected manually. in a fully
+consequence: unnecessary interaction. phase 1 had to be selected manually. in a fully
 autonomous run this would stall the session.
 
-**status:** addressed - see section 8, change 1.
+status: addressed - see section 8, change 1.
 
 ---
 
 ### deviation 3: wrong deploy-and-verify path (prompt 2)
 
-**what happened:** after `$ sis-dashboard` routing and the ASK_USER_QUESTION answer, the agent
+what happened: after `$ sis-dashboard` routing and the ASK_USER_QUESTION answer, the agent
 loaded `$ developing-with-streamlit` directly. when it then attempted to load the deploy-and-verify
 sub-skill, it resolved the path relative to the personal skills location and failed:
 
@@ -380,7 +380,7 @@ the correct path is in the project directory:
 the agent recovered by running `GLOB **/*deploy-and-verify*/SKILL.md` (found 3 files), then read
 the correct project path.
 
-**root cause:** `developing-with-streamlit` is intentionally installed in personal skills
+root cause: `developing-with-streamlit` is intentionally installed in personal skills
 (`~/.snowflake/cortex/skills/`). its sub-skills however are project-specific and live in
 `.cortex/skills/developing-with-streamlit/skills/`. the sis-dashboard routing table already
 references sub-skills via project-relative paths (e.g. `../developing-with-streamlit/skills/deploy-and-verify/SKILL.md`),
@@ -388,20 +388,20 @@ which resolve correctly. the error occurred because the agent invoked `$ develop
 directly instead of following the sis-dashboard routing table path. from the personal skill location,
 relative sub-skill paths resolve to `~/.snowflake/cortex/skills/...` where they do not exist.
 
-**consequence:** one failed READ, one GLOB, then successful load. no data impact. adds friction and
+consequence: one failed READ, one GLOB, then successful load. no data impact. adds friction and
 is a risk point if GLOB returns an ambiguous result in a different project.
 
-**status:** addressed - see section 8, change 2.
+status: addressed - see section 8, change 2.
 
 ---
 
 ### deviation 4: step order in check-local-environment (both sessions)
 
-**what happened:** in both sessions, step execution order differed from the skill's specified sequence.
+what happened: in both sessions, step execution order differed from the skill's specified sequence.
 in prompt 2 session: stat -> snow --version -> snow connection list -> python (failed) -> snow connection
 test -> python3.
 
-**assessment:** non-critical. all steps completed, outcome identical. not addressed.
+assessment: non-critical. all steps completed, outcome identical. not addressed.
 
 ---
 
@@ -409,13 +409,13 @@ test -> python3.
 
 ### change 1: sis-dashboard SKILL.md stopping points updated
 
-**before:**
+before:
 ```
 ## stopping points
 - before starting: confirm which phase the user wants to work on if intent is unclear
 ```
 
-**after:**
+after:
 ```
 ## stopping points
 - if phase is not specified in the user prompt: confirm which phase to run before proceeding
@@ -427,7 +427,7 @@ from the prompt.
 
 ### change 2: sis-dashboard notes + prompts.md installation section updated
 
-**sis-dashboard SKILL.md notes section** - added explicit prohibition against invoking
+sis-dashboard SKILL.md notes section - added explicit prohibition against invoking
 `$ sis-streamlit` directly:
 
 ```
@@ -436,11 +436,11 @@ from the prompt.
   sub-skills. always route through $ sis-dashboard which uses project-relative paths.
 ```
 
-**prompts.md "before you start"** - corrected the skill installation layout to reflect that
+prompts.md "before you start" - corrected the skill installation layout to reflect that
 `sis-streamlit` is a personal skill and sub-skills are in the project. added NOTE
 clarifying that `$ sis-streamlit` should not be invoked directly.
 
-**post-session follow-up** - the project skill was renamed from `developing-with-streamlit` to
+post-session follow-up - the project skill was renamed from `developing-with-streamlit` to
 `sis-streamlit` to eliminate name collision with the global snowflake skill of the same name.
 all routing table paths, `$` invocation references, and documentation updated accordingly.
 

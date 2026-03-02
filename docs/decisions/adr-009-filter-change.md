@@ -13,8 +13,8 @@ the agent implemented FILTER_CHANGE logging via session_state comparison: `if cu
 
 ## alternatives considered
 
-- **session_state comparison**: agent chose this approach; it does not work as described above. rejected: produces 0 audit events.
-- **`st.form` with on_submit**: captures all filter changes as a batch on form submit. does not match the sidebar interaction model (changes should be applied immediately). rejected: wrong ux pattern for sidebar filters.
+- session_state comparison: agent chose this approach; it does not work as described above. rejected: produces 0 audit events.
+- `st.form` with on_submit: captures all filter changes as a batch on form submit. does not match the sidebar interaction model (changes should be applied immediately). rejected: wrong ux pattern for sidebar filters.
 
 ## consequences
 

@@ -1,6 +1,8 @@
 # code review: dashboard.py
 
-## review 1: dashboard.py 707 lines (2026-03-01)
+the first review happened the day after phase_02_run_04, when the agent had declared the project complete. it found two critical SQL injection issues the pre-deploy scans had never caught. the second review, a day later, confirmed the fixes from run_05 landed correctly.
+
+## review 1: dashboard.py (2026-03-01)
 
 post-deploy state after phase_02_run_04. review performed after agent declared project complete.
 
@@ -18,9 +20,10 @@ post-deploy state after phase_02_run_04. review performed after agent declared p
 
 ---
 
-## review 2: dashboard.py 728 lines (2026-03-02)
+## review 2: dashboard.py (2026-03-02)
 
-post-deploy state after phase_02_run_05 security fixes.
+post-deploy state after phase_02_run_05 security fixes. the security-critical issues were all
+addressed - what remains is lower-priority functional and visual work.
 
 resolved since review 1:
 - issues 1.1 and 1.2: INSERT_RENEWAL_FLAG and UPDATE_RENEWAL_FLAG stored procedures created; all DML now via session.call()
@@ -35,7 +38,7 @@ still open:
 additional accepted pattern:
 - f-string SELECT at lines 606-614, 631-637, 703-710 interpolates DATABASE, SCHEMA, APP_NAME constants only; confirmed safe by post-deployment security scan (phase_03_run_02 prompt 5)
 
-### resolution tracking
+### tracking across both reviews
 
 | issue | review 1 status | review 2 status |
 |---|---|---|
@@ -51,4 +54,4 @@ additional accepted pattern:
 
 ---
 
-sources: archive/code_review_dashboard.md, archive/code_review_dashboard_02.md
+full findings and code examples in archive/code_review_dashboard_01.md and archive/code_review_dashboard_02.md.

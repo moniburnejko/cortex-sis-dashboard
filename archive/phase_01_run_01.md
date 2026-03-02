@@ -11,13 +11,13 @@
 
 phase 1 establishes everything needed before any dashboard code is written:
 
-- **prompt 1 (infrastructure):**
+- prompt 1 (infrastructure):
    - create logging objects: `APP_EVENTS`, `AUDIT_LOG`, `V_APP_EVENTS`, `LOG_AUDIT_EVENT`
    - create domain table: `RENEWAL_FLAGS`
    - create stage: `STAGE_RAW_CSV`
    - create 3 source tables: `FACT_RENEWAL`, `FACT_PREMIUM_EVENT`, `DIM_POLICY`
    - no data loaded yet
-- **prompt 2 (data load):**
+- prompt 2 (data load):
    - validate 3 local csv files
    - load them into the source tables via PUT and COPY INTO
    - log the operation
@@ -159,9 +159,9 @@ none.
 
 the agent ran the prepare-data workflow manually using bash commands:
 
-1. **validation:** `head -3 <file>`, `ls -la`, `wc -l` for each csv file.
-2. **no compression step:** the agent skipped `gzip -k` entirely.
-3. **PUT (uncompressed):** ran PUT directly on `.csv` files without `AUTO_COMPRESS=FALSE`:
+1. validation: `head -3 <file>`, `ls -la`, `wc -l` for each csv file.
+2. no compression step: the agent skipped `gzip -k` entirely.
+3. PUT (uncompressed): ran PUT directly on `.csv` files without `AUTO_COMPRESS=FALSE`:
    ```
    snow sql -q "PUT file:///...data/dim_policy.csv @STAGE_RAW_CSV ..."
    snow sql -q "PUT file:///...data/fact_renewal.csv @STAGE_RAW_CSV ..."
@@ -169,7 +169,7 @@ the agent ran the prepare-data workflow manually using bash commands:
    ```
    because `AUTO_COMPRESS` defaults to `TRUE`, snowflake compressed the files during upload.
    the data reached the stage in a valid state, so COPY INTO succeeded.
-4. **COPY INTO:** all 3 tables loaded with 0 errors:
+4. COPY INTO: all 3 tables loaded with 0 errors:
    - `DIM_POLICY`: 36,298 rows loaded
    - `FACT_RENEWAL`: 50,000 rows loaded
    - `FACT_PREMIUM_EVENT`: 94,642 rows loaded
@@ -222,7 +222,7 @@ the agent acknowledged the correction and invoked `$ prepare-data`.
 
 ### what the skill did
 
-**validation phase (prepare-data step 1-4):**
+validation phase (prepare-data step 1-4):
 
 the skill checked all 3 files in sequence:
 
@@ -234,7 +234,7 @@ the skill checked all 3 files in sequence:
 
 no ERROR or WARN conditions. validation passed for all 3 files.
 
-**agent autonomous decision: TRUNCATE before reload**
+agent autonomous decision: TRUNCATE before reload
 
 before proceeding to load, the agent queried current row counts and found:
 
@@ -250,7 +250,7 @@ the agent decided to TRUNCATE all 3 tables and reload.
 the prepare-data SKILL.md states: "to force reload: add `FORCE=TRUE`, or `TRUNCATE TABLE` first.
 ask the user before force-reloading." the agent did ask before truncating.
 
-**compression phase (prepare-data step 5):**
+compression phase (prepare-data step 5):
 
 ```bash
 rm -f *.gz && gzip -k fact_renewal.csv && gzip -k dim_policy.csv && gzip -k fact_premium_event.csv
@@ -263,7 +263,7 @@ result:
 
 this step was correctly executed this time, unlike the first attempt.
 
-**PUT phase (prepare-data step 6):**
+PUT phase (prepare-data step 6):
 
 all 3 files uploaded with `AUTO_COMPRESS=FALSE` (correct, since files were already compressed):
 
@@ -275,7 +275,7 @@ PUT file:///...data/fact_premium_event.csv.gz @STAGE_RAW_CSV AUTO_COMPRESS=FALSE
 
 all returned status `UPLOADED`.
 
-**COPY INTO phase (prepare-data step 7):**
+COPY INTO phase (prepare-data step 7):
 
 | file | rows_parsed | rows_loaded | errors_seen | status |
 |---|---|---|---|---|
@@ -283,7 +283,7 @@ all returned status `UPLOADED`.
 | dim_policy.csv.gz | 36,298 | 36,298 | 0 | LOADED |
 | fact_premium_event.csv.gz | 94,642 | 94,642 | 0 | LOADED |
 
-**row count verification (prepare-data step 8):**
+row count verification (prepare-data step 8):
 
 | TABLE_NAME | ROW_COUNT | EXPECTED | WITHIN TOLERANCE |
 |---|---|---|---|
@@ -291,7 +291,7 @@ all returned status `UPLOADED`.
 | FACT_PREMIUM_EVENT | 94,642 | ~94k | yes |
 | DIM_POLICY | 36,298 | ~36k | yes |
 
-**logging (AGENTS.md data loading instructions step 4):**
+logging (AGENTS.md data loading instructions step 4):
 
 ```
 CALL CORTEX_DB.CORTEX_SCHEMA.LOG_AUDIT_EVENT(
@@ -339,18 +339,18 @@ skills invoked: 1 out of 4 required (prepare-data, on second attempt only).
 
 ### deviation 1: check-local-environment and check-snowflake-context skipped
 
-**what happened:** agent ran a single `SNOWFLAKE_SQL_EXECUTE` instead of invoking the two
+what happened: agent ran a single `SNOWFLAKE_SQL_EXECUTE` instead of invoking the two
 session-start skills.
 
-**root cause:** these skills were in the mandatory block, but no explicit prohibition existed
+root cause: these skills were in the mandatory block, but no explicit prohibition existed
 against running equivalent commands manually. the agent saw that context values matched AGENTS.md
 and considered the check complete.
 
-**consequence:** snow cli version, connections.toml permissions (0600 check), python availability,
+consequence: snow cli version, connections.toml permissions (0600 check), python availability,
 and explicit schema/stage verification were not performed. in this session, all prerequisites
 were already in place so no failure resulted.
 
-**assessment (post-session):** these two skills are non-negotiable. they must always run at
+assessment (post-session): these two skills are non-negotiable. they must always run at
 session start, with no exceptions. a single context sql query is not a substitute:
 - it does not verify connections.toml permissions (a misconfigured 0600 triggers confusing errors later)
 - it does not normalize the session (USE ROLE, USE WAREHOUSE, USE DATABASE) if there is a mismatch
@@ -360,46 +360,46 @@ skipping them in a known-good environment appears harmless, but creates silent r
 other environment. the session start gate added to AGENTS.md (see section 10, change 6)
 enforces this as a hard stop before any ddl, data loading, or code generation.
 
-**status:** addressed - see section 10, changes 4, 5, and 6.
+status: addressed - see section 10, changes 4, 5, and 6.
 
 ---
 
 ### deviation 2: prepare-data bypassed on first attempt
 
-**what happened:** agent ran bash commands (head, ls, wc -l) and snow sql PUT commands manually,
+what happened: agent ran bash commands (head, ls, wc -l) and snow sql PUT commands manually,
 skipping the `$ prepare-data` skill entirely.
 
-**root cause:** `prepare-data` was not listed in the mandatory block. the skills table column
+root cause: `prepare-data` was not listed in the mandatory block. the skills table column
 "when to invoke" was treated as a suggestion. because the agent never read the skill file,
 it did not know about the required gzip compression step.
 
-**consequence:** files were uploaded uncompressed. snowflake's default `AUTO_COMPRESS=TRUE`
+consequence: files were uploaded uncompressed. snowflake's default `AUTO_COMPRESS=TRUE`
 compressed them during upload, so data loaded correctly. no data corruption occurred.
 
-**assessment (post-session):** while compression itself is not required for correctness (small
+assessment (post-session): while compression itself is not required for correctness (small
 files, snowflake handles both), the skill bypass had real consequences beyond compression:
 validation (encoding, column count, oversized rows) was skipped entirely, and the logging
 step (`LOG_AUDIT_EVENT` after load) did not run before the session hit a network error.
 the skill is mandatory because it is the only guaranteed path
 through validation, loading, and logging as a single atomic workflow.
 
-**corrective action:** intervention (prompt 2b) redirected the agent to use the skill.
+corrective action: intervention (prompt 2b) redirected the agent to use the skill.
 
 ---
 
 ### deviation 3: deploy-and-verify phase-1 skipped
 
-**what happened:** the agent ran acceptance sql queries directly instead of invoking
+what happened: the agent ran acceptance sql queries directly instead of invoking
 `$ deploy-and-verify phase-1`.
 
-**root cause:** no explicit prohibition against running acceptance checks manually. the mandatory
+root cause: no explicit prohibition against running acceptance checks manually. the mandatory
 block listed deploy-and-verify but did not prohibit manual sql.
 
-**consequence:** the acceptance checks performed matched the phase 1 done criteria in AGENTS.md,
+consequence: the acceptance checks performed matched the phase 1 done criteria in AGENTS.md,
 so the outcome was correct. however, any extended checks or reporting logic inside the skill
 were bypassed.
 
-**status:** addressed - see section 10, changes 4 and 5.
+status: addressed - see section 10, changes 4 and 5.
 
 ---
 
@@ -409,7 +409,7 @@ were bypassed.
 
 three changes were applied to close the governance gaps identified during this session.
 
-**change 1: added prepare-data to mandatory block**
+change 1: added prepare-data to mandatory block
 
 before:
 ```
@@ -426,14 +426,14 @@ mandatory:
 - before generating streamlit code: ...
 ```
 
-**change 2: added general constraint after mandatory block**
+change 2: added general constraint after mandatory block
 
 ```
 constraint: when a task matches a skill listed above, you MUST invoke it using `$ skill-name`.
 do NOT replicate the skill's steps manually. manual replication bypasses skill governance and is not allowed.
 ```
 
-**change 3: strengthened data loading instructions step 3**
+change 3: strengthened data loading instructions step 3
 
 before:
 ```
@@ -446,7 +446,7 @@ after:
    do NOT run these steps manually - the skill handles compression, encoding checks, and error handling.
 ```
 
-**change 4: added explicit "do NOT" prohibition to all remaining mandatory skill entries**
+change 4: added explicit "do NOT" prohibition to all remaining mandatory skill entries
 
 the pattern established for `prepare-data` was applied to every other mandatory skill:
 
@@ -459,7 +459,7 @@ the pattern established for `prepare-data` was applied to every other mandatory 
 
 this closed the remaining gaps identified in this session for deviations 1 and 4.
 
-**change 5: restructured skills section - merged skills table, mandatory block, and constraint into a single table**
+change 5: restructured skills section - merged skills table, mandatory block, and constraint into a single table
 
 the previous format duplicated information across two structures:
 - skills table: `when to invoke` column (treated as suggestion by the agent)
@@ -489,7 +489,7 @@ invoke with $ skill-name. do NOT replicate skill steps manually ...
 ...
 ```
 
-**change 6: added session start gate to AGENTS.md**
+change 6: added session start gate to AGENTS.md
 
 a new `session start gate` section was added immediately after the skills table. it is a
 hard stop before any ddl, data loading, or code generation:
@@ -506,7 +506,7 @@ do NOT proceed to source files, DDL, or code until both checks pass.
 this directly addresses deviation 1. the checklist format makes the gate explicit and
 leaves no room for interpretation - both items must be checked before any work begins.
 
-**change 7: added phase gates between SECTION 1, 2, and 3**
+change 7: added phase gates between SECTION 1, 2, and 3
 
 each done criteria section now begins with `run $ deploy-and-verify phase-X to verify`
 and each section transition has an explicit pre-flight check:
@@ -524,7 +524,7 @@ this addresses deviation 4 (deploy-and-verify skipped) by embedding the skill ca
 into the done criteria instructions rather than relying on the agent to remember it from the
 skills table.
 
-**change 8: added sis critical constraints table to SECTION 2**
+change 8: added sis critical constraints table to SECTION 2
 
 a compact reference table of forbidden sis patterns was added at the top of SECTION 2,
 before any code generation work begins. this consolidates the most critical constraints

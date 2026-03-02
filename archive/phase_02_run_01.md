@@ -12,7 +12,7 @@
 phase 2 builds and deploys the 3-page streamlit in snowflake dashboard.
 it is a single prompt (prompt 3) with a checkpoint before phase 3 begins.
 
-- **prompt 3 (dashboard build and deploy):**
+- prompt 3 (dashboard build and deploy):
   - enter `/plan` before pasting the prompt (required per prompts.md)
   - load sis patterns via `$ developing-with-streamlit` before planning
   - scaffold structure via `$ build-dashboard` (no args)
@@ -116,11 +116,11 @@ the session was interrupted when the skill bypass was detected. phase 2 was not 
 
 ### deviation 1: developing-with-streamlit skipped before planning
 
-**what happened:** the agent entered `/plan` mode and created a plan for the dashboard build
+what happened: the agent entered `/plan` mode and created a plan for the dashboard build
 without invoking `$ developing-with-streamlit` first. the plan proceeded from the dashboard
 specification in AGENTS.md directly, without loading sis warehouse runtime constraints.
 
-**root cause:** the mandatory skills block at the time of phase 2 told the agent what skills
+root cause: the mandatory skills block at the time of phase 2 told the agent what skills
 to run, but the `developing-with-streamlit` entry was located in the global skills section
 (described as an override), not in a procedural gate before planning begins. the agent
 saw "before any streamlit code" as a trigger tied to code generation, not to the planning step.
@@ -129,20 +129,20 @@ nothing saying "do NOT plan streamlit code without loading this skill first."
 
 see section 7 for cross-phase comparison.
 
-**consequence:** despite the agent eventually reading build-dashboard and brand-identity skills,
+consequence: despite the agent eventually reading build-dashboard and brand-identity skills,
 it did not proactively read the global developing-with-streamlit skill to understand the baseline
 sis warehouse runtime patterns. this is different from missing constraints - the plan itself was
 correct. the issue is methodological: the agent should have started with the global skill to understand
 what patterns the project overrides, rather than jumping directly to project skills.
 
-**assessment (post-session):** the global developing-with-streamlit skill is never needed if
+assessment (post-session): the global developing-with-streamlit skill is never needed if
 a local demo-level skill is present with the correct frontmatter description. the fix is
 not to force the agent to read the global skill, but to create a local skill that supersedes
 it and add it to the skills table with a constraint that prohibits writing streamlit code
 without loading it first. this also reduces token cost: the agent reads the skill description
 only, not the full global skill body.
 
-**status:** addressed - see section 8.
+status: addressed - see section 8.
 
 ---
 
@@ -159,8 +159,8 @@ phases 1 and 2 both produced skill bypass incidents with the same underlying str
 | outcome | data loaded correctly (by luck) | plan generated without sis constraints; phase not completed |
 | fix | added to mandatory block + do NOT prohibition | created local skill + added to skills table + pre-planning gate |
 
-the pattern: **describing a skill (what it does, when to invoke) is not the same as
-enforcing it (hard stop if not invoked)**. skills must be paired with co-located
+the pattern: describing a skill (what it does, when to invoke) is not the same as
+enforcing it (hard stop if not invoked). skills must be paired with co-located
 prohibitions to be reliable.
 
 ---
@@ -175,7 +175,7 @@ documented in report_phase_1.md.
 three new skill files were created at demo level so the agent never needs to reach
 for the global developing-with-streamlit skill:
 
-**`demos/renewal_radar_sis_dashboard/skills/developing-with-streamlit/SKILL.md`**
+`demos/renewal_radar_sis_dashboard/skills/developing-with-streamlit/SKILL.md`
 
 main skill, supersedes the global developing-with-streamlit for this project.
 frontmatter description explicitly states "sis warehouse runtime (streamlit 1.52.*) -
@@ -183,7 +183,7 @@ supersedes the global developing-with-streamlit skill." routes to two sub-skills
 contains a critical differences table (sis vs spcs): connection, dependencies,
 streamlit version, forbidden apis, deployment config.
 
-**`demos/renewal_radar_sis_dashboard/skills/developing-with-streamlit/skills/general-streamlit/SKILL.md`**
+`demos/renewal_radar_sis_dashboard/skills/developing-with-streamlit/skills/general-streamlit/SKILL.md`
 
 8 sections covering sis-specific patterns:
 - snowflake connection: `get_active_session()` inside functions, never module-level
@@ -193,7 +193,7 @@ streamlit version, forbidden apis, deployment config.
 - layout: `st.set_page_config(layout="wide")` must be first `st.*` call
 - session state, data display, page config
 
-**`demos/renewal_radar_sis_dashboard/skills/developing-with-streamlit/skills/sis-dashboard/SKILL.md`**
+`demos/renewal_radar_sis_dashboard/skills/developing-with-streamlit/skills/sis-dashboard/SKILL.md`
 
 routes to existing project skills (`$ build-dashboard`, `$ brand-identity`, `$ deploy-and-verify`).
 contains mandatory sequence before generating dashboard.py.
@@ -202,7 +202,7 @@ contains yaml file templates (snowflake.yml with no artifacts/runtime_name; envi
 
 ### AGENTS.md changes
 
-**change 1: added developing-with-streamlit to skills table**
+change 1: added developing-with-streamlit to skills table
 
 the skill was added to the mandatory skills table with its constraint:
 
@@ -213,7 +213,7 @@ the skill was added to the mandatory skills table with its constraint:
 this ensures the agent sees the skill co-located with its prohibition, not buried in a
 separate override section.
 
-**change 2: skills table constraint column format**
+change 2: skills table constraint column format
 
 before: column header was "do NOT"; cell values were positive statements.
 
@@ -233,7 +233,7 @@ after: column renamed to "constraint"; each cell is a complete negation starting
 
 prohibition is now self-contained per row - no mental combination required.
 
-**change 3: removed redundant sis content from SECTION 2**
+change 3: removed redundant sis content from SECTION 2
 
 approximately 90 lines removed that were now covered by the developing-with-streamlit skill:
 - sis api constraints introduction paragraph
@@ -246,7 +246,7 @@ approximately 90 lines removed that were now covered by the developing-with-stre
 this reduced AGENTS.md by ~90 lines without losing any information - the agent now reads
 it from the skill instead.
 
-**change 4: moved done criteria to be adjacent to their phases**
+change 4: moved done criteria to be adjacent to their phases
 
 before: done criteria for phases 1 and 2 were at the end of the file in SECTION 3.
 the agent had to scroll the entire document to find them.
@@ -259,7 +259,7 @@ after:
 criteria are now co-located with the work they verify - the agent does not need to
 cross-reference sections.
 
-**change 5: moved data loading instructions from SECTION 3 to SECTION 1**
+change 5: moved data loading instructions from SECTION 3 to SECTION 1
 
 data loading was documented in SECTION 3 (governance) but belongs logically in SECTION 1
 (infrastructure). moved to end of SECTION 1, before done criteria phase 1.
@@ -278,6 +278,6 @@ to match the current AGENTS.md template.
 
 this section summarizes the key findings from sections 6, 7, and 8 for reference.
 
-- **trigger scope:** "before any streamlit code" is not a gate before planning. the agent treats planning and code generation as separate triggers. constraints must explicitly cover both: "before planning OR writing any streamlit code." (see section 6, deviation 1 root cause.)
-- **local supersedes global:** a local skill with frontmatter stating "supersedes global X for this project" is chosen automatically over the global skill. this also reduces token cost: the agent reads local content instead of the full global skill body. (see section 6, assessment.)
-- **bypass pattern:** the root cause pattern is stable across phases - missing mandatory entry + no co-located prohibition = agent takes the direct path. the fix is always the same: skill in mandatory table + prohibition + concrete gate. apply this pattern when adding any new skill. (see section 7.)
+- trigger scope: "before any streamlit code" is not a gate before planning. the agent treats planning and code generation as separate triggers. constraints must explicitly cover both: "before planning OR writing any streamlit code." (see section 6, deviation 1 root cause.)
+- local supersedes global: a local skill with frontmatter stating "supersedes global X for this project" is chosen automatically over the global skill. this also reduces token cost: the agent reads local content instead of the full global skill body. (see section 6, assessment.)
+- bypass pattern: the root cause pattern is stable across phases - missing mandatory entry + no co-located prohibition = agent takes the direct path. the fix is always the same: skill in mandatory table + prohibition + concrete gate. apply this pattern when adding any new skill. (see section 7.)

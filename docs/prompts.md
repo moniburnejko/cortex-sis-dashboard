@@ -36,7 +36,7 @@ complete these steps before launching cortex code cli:
 
 ### when to use /plan mode
 
-- **prompt 3** (dashboard build): the agent will generate a large Python file.
+- prompt 3 (dashboard build): the agent will generate a large Python file.
   enter `/plan` before pasting the prompt so you can review the approach
   before code is written.
 - **any time the agent does something unexpected**: enter `/plan` and ask
@@ -50,7 +50,7 @@ complete these steps before launching cortex code cli:
   existing objects.
 - the agent must stay within the schema defined in AGENTS.md.
 - if the agent writes INSERT or UPDATE using f-strings with values from
-  `st.text_input`, `st.text_area`, or any user widget: **stop it immediately.**
+  `st.text_input`, `st.text_area`, or any user widget: stop it immediately.
   require `$ sis-streamlit -> secure-dml` before any DML code is written.
   the fix requires a stored procedure, not whitelist validation.
 - if the agent builds SQL with f-strings using user-selected filter values
@@ -156,7 +156,7 @@ that all 3 pages render correctly.
 
 open the app url and interact with all 3 pages:
 
-**page 1 (renewal KPI overview):**
+page 1 (renewal KPI overview):
 - 4 kpi cards show values (not None or NaN)
 - 3 charts display data
 - sidebar filters work (region, segment, channel, date range)
@@ -164,14 +164,14 @@ open the app url and interact with all 3 pages:
   with your username and a timestamp within the last 5 minutes.
   if no new row appears: FILTER_CHANGE logging is missing from the code.
 
-**page 2 (premium pressure analysis):**
+page 2 (premium pressure analysis):
 - 3 kpi cards at top
 - bar charts and heatmap display data
 - sidebar has region, segment, channel, date range + "Final Offers Only" toggle
 - "flag for review" section works: submit a flag, see st.success with a flag_id
   (st.success MUST show a UUID like "Flag submitted: 3f9a1c42-...", NOT the scope string)
 
-**page 3 (activity log):**
+page 3 (activity log):
 - tab 1: user interactions table with your username in USER_NAME (not NULL or a service account)
 - tab 1: review flags section with "mark reviewed" button. FLAGGED_BY shows your username.
 - tab 2: agent operations table
@@ -260,16 +260,16 @@ cover changes made in subsequent edit cycles.
 
 each prompt ends with a stop condition and waits for user confirmation:
 
-- **prompt 1** ensures infrastructure exists before data is loaded.
+- prompt 1 ensures infrastructure exists before data is loaded.
   catching DDL or permission failures here prevents cascading errors
   in data load.
-- **prompt 2** ensures data is in Snowflake before any code is written.
+- prompt 2 ensures data is in Snowflake before any code is written.
   row count mismatches caught here prevent dashboard bugs.
-- **prompt 3** ensures the dashboard is deployed and working before
+- prompt 3 ensures the dashboard is deployed and working before
   verification queries check for user interaction records.
-- **prompt 4** runs the full acceptance sweep after the user has
+- prompt 4 runs the full acceptance sweep after the user has
   interacted with all features.
-- **prompt 5** runs a post-deployment security scan: checks for DML injection,
+- prompt 5 runs a post-deployment security scan: checks for DML injection,
   audit event presence, and forbidden patterns introduced during incremental editing.
 
 without stopping after each phase, a misunderstanding in phase 1
