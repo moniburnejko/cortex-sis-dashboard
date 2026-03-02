@@ -85,6 +85,10 @@ checking snowflake context manually via `snow sql`, `SNOWFLAKE_SQL_EXECUTE`, or 
 is NOT equivalent to invoking the skills. the skills perform additional validation steps
 that manual checks bypass.
 
+> **hooks:** `.cortex/hooks.json` is configured with a sessionstart hook that automatically
+> injects the gate instruction. this is belt-and-suspenders with the prompt text instruction.
+> if the hooks file is missing or disabled, the prompt text instruction is the fallback.
+
 ---
 
 ## source files (local)

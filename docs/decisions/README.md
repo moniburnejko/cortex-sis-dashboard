@@ -46,3 +46,4 @@ format: adr (architecture decision records): retrospective, covering phase_01 th
 | [adr-010](adr-010-altair-only.md) | altair-only charts | 2026-03-01 | phase_02_run_01 |
 | [adr-011](adr-011-module-session.md) | module-level session | 2026-03-01 | code_review_dashboard |
 | [adr-012](adr-012-prompt-vs-agents-enforcement.md) | prompt text as enforcement mechanism | 2026-03-02 | phase_02_run_04, phase_03_run_01 |
+| [adr-013](adr-013-hooks-enforcement.md) | hooks-based gate enforcement | 2026-03-02 | phase_02_run_05, phase_03_run_02 |

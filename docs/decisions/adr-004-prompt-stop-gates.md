@@ -1,6 +1,6 @@
 # adr-004: prompt stop-gates
 
-**date:** 2026-03-01
+**date:** 2026-02-26
 **source:** docs/prompts.md, phase_01_run_01.md (deviation: agent did not stop)
 
 ## problem

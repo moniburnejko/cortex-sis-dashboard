@@ -1,6 +1,6 @@
 # adr-003: current_sis_user identity
 
-**date:** 2026-03-01
+**date:** 2026-02-27
 **source:** AGENTS.md sis critical constraints, code_review_dashboard.md issue 1.3
 
 ## problem

@@ -1,6 +1,6 @@
 # adr-006: whitelist filter validation
 
-**date:** 2026-03-01
+**date:** 2026-02-26
 **source:** AGENTS.md security rule 3, build-dashboard/SKILL.md scan mode
 
 ## problem

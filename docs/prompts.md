@@ -25,6 +25,11 @@ complete these steps before launching cortex code cli:
    cortex
    ```
 
+5. verify hooks are active
+   `.cortex/hooks.json` is committed to git and auto-loaded by cortex code cli.
+   the sessionstart hook automatically injects the gate instruction at session start.
+   no manual step needed - hooks activate when you run `cortex` in the project directory.
+
 ---
 
 ## session guidance
@@ -220,6 +225,8 @@ this is a security and completeness scan of the deployed dashboard.py.
 run it after checkpoint 3 passes and after committing to git.
 
 ```
+invoke $ check-local-environment, then $ check-snowflake-context. do not proceed until both pass.
+
 use $ sis-streamlit -> build-dashboard dashboard.py to run a full
 post-deployment security scan of the file.
 report every issue found including:
