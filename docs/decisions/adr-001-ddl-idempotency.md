@@ -1,7 +1,7 @@
 # adr-001: ddl idempotency
 
-**date:** 2026-03-01
-**source:** phase_01_run_01.md, AGENTS.md DDL rule
+**date:** 2026-02-25
+**source:** phase_01_run_01.md, AGENTS.md ddl rule
 
 ## problem
 
@@ -15,16 +15,15 @@ use `CREATE OR ALTER TABLE`: an idempotent snowflake syntax that modifies the sc
 
 - **CREATE TABLE IF NOT EXISTS**: idempotent with respect to existence, but does not modify the schema if the table already exists with different columns. rejected: does not cover schema changes.
 - **CREATE OR REPLACE TABLE**: drops and recreates the table. rejected: data loss on every re-run.
-- **ALTER TABLE + IF NOT EXISTS guard**: possible, but requires separate logic per column. rejected: too verbose.
 
 ## consequences
 
 - safe ddl when phase 1 is executed multiple times
-- `CREATE OR ALTER` is snowflake-specific syntax. does not work in other databases (PostgreSQL, MySQL, etc.)
+- `CREATE OR ALTER` is snowflake-specific syntax. does not work in other databases (postgresql, mysql, etc.)
 - views require an exception: `CREATE OR REPLACE VIEW` remains correct and safe
 - rule encoded in AGENTS.md as a ddl rule; build-dashboard/SKILL.md scans for `OR REPLACE TABLE` as a bug pattern
 
 ## related
 
-- AGENTS.md: DDL rules section
+- AGENTS.md: ddl rules section
 - `.cortex/skills/sis-streamlit/skills/build-dashboard/SKILL.md`: scan mode step 2

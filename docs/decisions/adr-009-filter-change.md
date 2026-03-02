@@ -1,4 +1,4 @@
-# adr-012: on_change= for filter_change
+# adr-009: on_change= for filter_change
 
 **date:** 2026-03-01
 **source:** final_report_01.md BUG-003, code_review_dashboard.md issue 2
@@ -15,7 +15,6 @@ the agent implemented FILTER_CHANGE logging via session_state comparison: `if cu
 
 - **session_state comparison**: agent chose this approach; it does not work as described above. rejected: produces 0 audit events.
 - **`st.form` with on_submit**: captures all filter changes as a batch on form submit. does not match the sidebar interaction model (changes should be applied immediately). rejected: wrong ux pattern for sidebar filters.
-- **javascript postMessage hook**: not available in sis. rejected: not feasible.
 
 ## consequences
 
@@ -26,7 +25,6 @@ the agent implemented FILTER_CHANGE logging via session_state comparison: `if cu
 
 ## related
 
-- [adr-014](adr-014-two-date-inputs.md): two date inputs, each needing on_change
 - `.cortex/skills/sis-streamlit/skills/deploy-and-verify/SKILL.md`: criterion 12
 - `.cortex/skills/sis-streamlit/skills/build-dashboard/SKILL.md`: FILTER_CHANGE presence check
 - AGENTS.md: FILTER_CHANGE on_change requirement

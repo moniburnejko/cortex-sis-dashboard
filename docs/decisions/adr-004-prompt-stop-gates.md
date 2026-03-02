@@ -1,4 +1,4 @@
-# adr-005: prompt stop-gates
+# adr-004: prompt stop-gates
 
 **date:** 2026-03-01
 **source:** docs/prompts.md, phase_01_run_01.md (deviation: agent did not stop)
@@ -32,5 +32,5 @@ without explicit stop conditions, the agent proceeded through phases without wai
 
 ## related
 
-- [adr-006](adr-006-session-start-gate.md): session start gate (related control pattern)
+- [adr-005](adr-005-session-start-gate.md): session start gate (related control pattern)
 - `docs/prompts.md`: current prompt set with stop conditions

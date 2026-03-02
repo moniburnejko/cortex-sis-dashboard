@@ -1,4 +1,4 @@
-# adr-006: session start gate
+# adr-005: session start gate
 
 **date:** 2026-03-01
 **source:** final_report_01.md section 4.2 pattern #1, phase_02_run_04.md
@@ -26,7 +26,6 @@ AGENTS.md session start gate reinforced with an explicit STOP and a note: "manua
 
 ## related
 
-- [adr-005](adr-005-four-prompt-stop-gate.md): stop-gate pattern for prompts
-- [adr-004](adr-004-project-vs-personal-skills.md): where skills live
+- [adr-004](adr-004-prompt-stop-gates.md): stop-gate pattern for prompts
 - AGENTS.md: session start gate section
 - `docs/prompts.md`: prompt 1 with explicit skill call

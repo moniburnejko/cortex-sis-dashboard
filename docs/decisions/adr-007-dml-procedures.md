@@ -1,4 +1,4 @@
-# adr-008: dml stored procedures
+# adr-007: dml stored procedures
 
 **date:** 2026-03-01
 **source:** code_review_dashboard.md issue 1.1, 1.2; final_report_01.md BUG-001, BUG-002
@@ -42,9 +42,9 @@ procedures created in phase 1 alongside `LOG_AUDIT_EVENT`. values passed as para
 
 ## related
 
-- [adr-002](adr-002-log-audit-event-procedure.md): `LOG_AUDIT_EVENT` (same pattern)
+- [adr-002](adr-002-log-audit-event.md): `LOG_AUDIT_EVENT` (same pattern)
 - [adr-003](adr-003-current-sis-user.md): `CURRENT_SIS_USER` as a parameter
-- [adr-007](adr-007-whitelist-validation-filters.md): injection for enum filters (different category)
-- [adr-009](adr-009-secure-dml-standalone-skill.md): secure-dml skill with ddl and call patterns
+- [adr-006](adr-006-whitelist-filters.md): injection for enum filters (different category)
+- [adr-008](adr-008-secure-dml.md): secure-dml skill with ddl and call patterns
 - `.cortex/skills/sis-streamlit/skills/secure-dml/SKILL.md`
 - AGENTS.md: security rule 7

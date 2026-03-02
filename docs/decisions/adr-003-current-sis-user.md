@@ -26,7 +26,7 @@ in streamlit in snowflake (sis), `CURRENT_USER()` (a sql function) returns the s
 
 ## related
 
-- [adr-002](adr-002-log-audit-event-procedure.md): `LOG_AUDIT_EVENT` accepts p_user_name
-- [adr-008](adr-008-dml-stored-procedures.md): INSERT/UPDATE procedures use p_user_name
+- [adr-002](adr-002-log-audit-event.md): `LOG_AUDIT_EVENT` accepts p_user_name
+- [adr-007](adr-007-dml-procedures.md): INSERT/UPDATE procedures use p_user_name
 - AGENTS.md: sis critical constraints
 - `.cortex/skills/sis-streamlit/skills/sis-patterns/SKILL.md`

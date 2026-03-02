@@ -1,4 +1,4 @@
-# adr-007: whitelist filter validation
+# adr-006: whitelist filter validation
 
 **date:** 2026-03-01
 **source:** AGENTS.md security rule 3, build-dashboard/SKILL.md scan mode
@@ -24,12 +24,12 @@ two-layer protection:
 ## consequences
 
 - whitelist validation applies ONLY to enums (regions, segments, channels): a finite set of values
-- does NOT apply to free-text (flag_reason, review_notes). that is covered by adr-008 (stored procedures)
+- does NOT apply to free-text (flag_reason, review_notes). that is covered by adr-007 (stored procedures)
 - `VALID_LIST` must be refreshed when db data changes; `@st.cache_data` with a TTL is the recommended pattern
 - build-dashboard/SKILL.md scan mode checks for f-string IN-list construction without a whitelist
 
 ## related
 
-- [adr-008](adr-008-dml-stored-procedures.md): dml with free-text user input (different threat category)
+- [adr-007](adr-007-dml-procedures.md): dml with free-text user input (different threat category)
 - AGENTS.md: security rule 3
 - `.cortex/skills/sis-streamlit/skills/build-dashboard/SKILL.md`: scan step 2a

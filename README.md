@@ -14,10 +14,10 @@ cortex code cli takes `AGENTS.md` as input and autonomously:
 
 | file/dir | description |
 |---|---|
-| `AGENTS.md` | cortex code cli project spec - single source of truth |
+| `AGENTS.md` | centralized instruction manual for cortex code cli: setup, testing, and coding guidelines |
 | `dashboard.py` | streamlit in snowflake app |
 | `snowflake.yml` | sis deployment config |
-| `environment.yml` | conda env - streamlit 1.52.*, altair, pandas |
+| `environment.yml` | conda env |
 | `.cortex/skills/` | project skills invoked by the agent |
 | `docs/prompts.md` | 4-phase session prompts with checkpoints |
 | `docs/reports/` | session reports from cortex code cli runs |

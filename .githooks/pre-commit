@@ -1,3 +1,4 @@
+#!/bin/bash
 # pre-commit hook - automatically sanitize sensitive snowflake object names
 # in staged files before committing.
 #

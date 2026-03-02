@@ -1,4 +1,4 @@
-# adr-013: altair-only charts
+# adr-010: altair-only charts
 
 **date:** 2026-03-01
 **source:** AGENTS.md sis critical constraints, brand-identity/SKILL.md
@@ -22,11 +22,9 @@ altair for all charts without exception. native streamlit chart functions (`st.b
 - `environment.yml` must include `- altair` in dependencies
 - all chart code examples in brand-identity and AGENTS.md use altair api
 - encoding conventions are standardized: `alt.X("period:T")`, `alt.Color("outcome:N", scale=alt.Scale(...))`, etc.
-- color domain/range must be passed explicitly via `alt.Scale(domain=..., range=...)` to enforce adr-016 outcome colors
+- color domain/range must be passed explicitly via `alt.Scale(domain=..., range=...)` to enforce consistent outcome colors
 
 ## related
 
-- [adr-010](adr-010-date-trunc-aggregation.md): DATE_TRUNC aggregation feeding altair charts
-- [adr-016](adr-016-distinct-outcome-colors.md): color encoding via altair Scale
 - `.cortex/skills/sis-streamlit/skills/brand-identity/SKILL.md`
 - AGENTS.md: sis critical constraints (forbidden chart functions)

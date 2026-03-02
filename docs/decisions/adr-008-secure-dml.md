@@ -1,4 +1,4 @@
-# adr-009: secure-dml skill
+# adr-008: secure-dml skill
 
 **date:** 2026-03-01
 **source:** session 2026-03-01
@@ -22,12 +22,11 @@ a separate sub-skill `secure-dml/SKILL.md`: one file, one responsibility. ddl de
 - skill visible in the routing table in `sis-dashboard/SKILL.md` and `sis-streamlit/SKILL.md`
 - new step 8 in the standard workflow sequence: "load secure-dml before writing flag form"
 - agent MUST load it before the flag form code. enforced by an AGENTS.md constraint
-- follows adr-004: placed in `.cortex/skills/sis-streamlit/skills/secure-dml/` and committed to git
+- placed in `.cortex/skills/sis-streamlit/skills/secure-dml/` and committed to git
 
 ## related
 
-- [adr-004](adr-004-project-vs-personal-skills.md): project skills location
-- [adr-008](adr-008-dml-stored-procedures.md): the dml patterns this skill documents
+- [adr-007](adr-007-dml-procedures.md): the dml patterns this skill documents
 - `.cortex/skills/sis-streamlit/skills/secure-dml/SKILL.md`
 - `.cortex/skills/sis-dashboard/SKILL.md`: routing table
 - AGENTS.md: constraint referencing secure-dml

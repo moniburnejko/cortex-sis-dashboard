@@ -1,4 +1,4 @@
-# adr-015: module-level session
+# adr-011: module-level session
 
 **date:** 2026-03-01
 **source:** code_review_dashboard.md issue 6, sis-patterns/SKILL.md (contradiction)
