@@ -26,9 +26,9 @@ complete these steps before launching cortex code cli:
    ```
 
 5. verify hooks are active
-   `.cortex/hooks.json` is committed to git and auto-loaded by cortex code cli.
+   hooks are configured at `~/.snowflake/cortex/hooks.json` (global, not project-level).
    the sessionstart hook automatically injects the gate instruction at session start.
-   no manual step needed - hooks activate when you run `cortex` in the project directory.
+   if the file does not exist, copy it from `docs/hooks.md` setup instructions.
 
 ---
 
@@ -39,7 +39,7 @@ complete these steps before launching cortex code cli:
 - prompt 3 (dashboard build): the agent will generate a large Python file.
   enter `/plan` before pasting the prompt so you can review the approach
   before code is written.
-- **any time the agent does something unexpected**: enter `/plan` and ask
+- any time the agent does something unexpected: enter `/plan` and ask
   what it intends.
 - do NOT use `/plan` for prompts 1, 2, or 4. those are deterministic
   sequences where planning adds no value.
@@ -88,8 +88,6 @@ interaction.
 ## prompt 1: infrastructure
 
 ```
-invoke $ check-local-environment, then $ check-snowflake-context. do not proceed until both pass.
-
 set up phase 1 infrastructure: logging objects, domain table, stage,
 and source tables.
 do not load csv data yet.
@@ -111,8 +109,6 @@ if anything is missing, tell the agent what is missing.
 ## prompt 2: data load
 
 ```
-invoke $ check-local-environment, then $ check-snowflake-context. do not proceed until both pass.
-
 validate and load all 3 csv files into the source tables.
 log the data load operation.
 use $ sis-streamlit to run the phase 1 acceptance checks and show the full results.
@@ -144,8 +140,6 @@ if anything fails, tell the agent exactly what failed (use template from session
 enter `/plan` before pasting this prompt.
 
 ```
-invoke $ check-local-environment, then $ check-snowflake-context. do not proceed until both pass.
-
 phase 1 is complete. all infrastructure and data are in place.
 build and deploy the dashboard.
 stop after showing the app url and wait for my confirmation
@@ -187,7 +181,7 @@ and flag review on page 3. my username appears in USER_NAME and FLAGGED_BY.
 if an error appears, use the error reporting template from the session
 guidance section.
 
-**after checkpoint 3 passes:** commit dashboard.py to git.
+after checkpoint 3 passes: commit dashboard.py to git.
 this enables git diff verification for any subsequent changes and allows
 the agent to verify what changed between deploys.
 
@@ -196,8 +190,6 @@ the agent to verify what changed between deploys.
 ## prompt 4: final verification
 
 ```
-invoke $ check-local-environment, then $ check-snowflake-context. do not proceed until both pass.
-
 use $ sis-streamlit to run the full acceptance check across all phases.
 for the manual app-renders criterion, mark it as confirmed,
 i have already verified it.
@@ -225,8 +217,6 @@ this is a security and completeness scan of the deployed dashboard.py.
 run it after checkpoint 3 passes and after committing to git.
 
 ```
-invoke $ check-local-environment, then $ check-snowflake-context. do not proceed until both pass.
-
 use $ sis-streamlit -> build-dashboard dashboard.py to run a full
 post-deployment security scan of the file.
 report every issue found including:

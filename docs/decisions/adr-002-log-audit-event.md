@@ -1,7 +1,7 @@
 # adr-002: log_audit_event procedure
 
-**date:** 2026-02-25
-**source:** AGENTS.md, phase_01_run_01.md
+date: 2026-02-25
+source: AGENTS.md, phase_01_run_01.md
 
 ## problem
 

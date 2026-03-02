@@ -1,7 +1,7 @@
 # adr-007: dml stored procedures
 
-**date:** 2026-03-01
-**source:** code_review_dashboard.md issue 1.1, 1.2; final_report_01.md BUG-001, BUG-002
+date: 2026-03-01
+source: code_review_dashboard.md issue 1.1, 1.2; final_report_01.md BUG-001, BUG-002
 
 ## problem
 

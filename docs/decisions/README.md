@@ -14,8 +14,8 @@ format: adr (architecture decision records): retrospective, covering phase_01 th
 ```markdown
 # adr-00: title
 
-**date:** YYYY-MM-DD
-**source:** [run/report where the decision was made or the problem was identified]
+date: YYYY-MM-DD
+source: [run/report where the decision was made or the problem was identified]
 
 ## problem
 

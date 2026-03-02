@@ -1,7 +1,7 @@
 # adr-013: hooks-based enforcement for session start gate
 
-**date:** 2026-03-02
-**source:** phase_02_run_05.md, phase_03_run_02.md, docs/coco_cli_features/hooks.md
+date: 2026-03-02
+source: phase_02_run_05.md, phase_03_run_02.md, docs/coco_cli_features/hooks.md
 
 ## problem
 
@@ -29,10 +29,11 @@ retain the gate instruction in `docs/prompts.md` prompt texts (belt-and-suspende
 
 ## consequences
 
-- gate is enforced at runtime level for all sessions, including ad-hoc ones not using `docs/prompts.md`
-- prompt 5 gate gap closed (previously missing)
-- `PreCompact` hook prevents environment drift in long sessions (phase_02_run_05 + phase_03_run_02 ran as a single session that spanned compaction)
-- `.cortex/hooks.json` is committed to git - hooks apply to anyone running cortex in this project directory
+- `PreCompact` hook is effective - reinjects context before compaction when the agent has no competing explicit task
+- `PreToolUse` hook is effective as a soft reminder before direct snowflake tool calls
+- `SessionStart` hook fires and injects the gate prompt, but `type: "prompt"` hooks are soft: the agent can prioritize an explicit user task over the injected instruction. gate enforcement via SessionStart hook alone is not reliable
+- primary gate enforcement in practice: `~/.snowflake/cortex/memory/operational-protocol.md` - the agent reads `/memories` automatically and treats it as authoritative. the memory file explicitly states the gate runs before any skill, including skills named in the user's prompt
+- hooks require manual installation: cortex code cli reads hooks exclusively from `~/.snowflake/cortex/hooks.json`. the project-level `.cortex/hooks.json` is not auto-loaded
 - hooks config is snapshotted at session start per hooks documentation
 
 ## related

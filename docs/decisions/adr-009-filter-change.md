@@ -1,7 +1,7 @@
 # adr-009: on_change= for filter_change
 
-**date:** 2026-03-01
-**source:** final_report_01.md BUG-003, code_review_dashboard.md issue 2
+date: 2026-03-01
+source: final_report_01.md BUG-003, code_review_dashboard.md issue 2
 
 ## problem
 

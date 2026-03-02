@@ -74,19 +74,17 @@ phase_02_run_05 deployed on first attempt - only run to do so. context: scope wa
 
 every major deviation from this project fed back into a governance change - mostly to prompts.md, AGENTS.md, or the skill files. the table maps problems to decisions.
 
-| problem | adr | change |
-|---|---|---|
-| agent ran manual context commands after gate skills | adr-001 | AGENTS.md skill constraints: added "do NOT run X manually after skill completes" |
-| acceptance checks run manually instead of via skill | adr-004 | prompts updated to explicitly name `$ sis-dashboard` |
-| session start gate consistently skipped | adr-005 | gate instruction added to all prompts in prompts.md |
-| whitelist filter values in f-string sql | adr-006 | security rule 3 documents accepted exception; snowpark api preferred |
-| dml with user text input not parameterized | adr-007 | security rule 3 expanded to cover INSERT/UPDATE; session.call() required |
-| no skill for secure dml patterns | adr-008 | secure-dml sub-skill created under sis-streamlit |
-| FILTER_CHANGE callbacks missing | adr-009 | AGENTS.md page specs updated; FILTER_CHANGE added to build-dashboard scan |
-| agent tried `$ sis-streamlit -> deploy-and-verify` as literal command | adr-010 | routing notation clarified in AGENTS.md |
-| module-level session vs sis-patterns contradiction | adr-011 | sis-patterns updated: module-level acceptable for non-cached code; cached functions must call get_active_session() inside |
-| prompt text drives compliance more than AGENTS.md mandates | adr-012 | gate instruction added as explicit text to every prompt; verified in phase_03_run_02 |
-| hooks-based gate enforcement | adr-013 | hooks.json added; pre-session gate check via .cortex/hooks.json |
+- agent ran manual context commands after gate skills (adr-001): AGENTS.md skill constraints updated - added "do NOT run X manually after skill completes"
+- acceptance checks run manually instead of via skill (adr-004): prompts updated to explicitly name `$ sis-dashboard`
+- session start gate consistently skipped (adr-005): gate instruction added to all prompts in prompts.md
+- whitelist filter values in f-string sql (adr-006): security rule 3 documents accepted exception; snowpark api preferred
+- dml with user text input not parameterized (adr-007): security rule 3 expanded to cover INSERT/UPDATE; session.call() required
+- no skill for secure dml patterns (adr-008): secure-dml sub-skill created under sis-streamlit
+- FILTER_CHANGE callbacks missing (adr-009): AGENTS.md page specs updated; FILTER_CHANGE added to build-dashboard scan
+- agent tried `$ sis-streamlit -> deploy-and-verify` as literal command (adr-010): routing notation clarified in AGENTS.md
+- module-level session vs sis-patterns contradiction (adr-011): sis-patterns updated - module-level acceptable for non-cached code; cached functions must call get_active_session() inside
+- prompt text drives compliance more than AGENTS.md mandates (adr-012): gate instruction added as explicit text to every prompt; verified in phase_03_run_02
+- hooks-based gate enforcement (adr-013): hooks installed at ~/.snowflake/cortex/hooks.json; pre-session gate check active
 
 ---
 

@@ -1,7 +1,7 @@
 # adr-010: altair-only charts
 
-**date:** 2026-03-01
-**source:** AGENTS.md sis critical constraints, brand-identity/SKILL.md
+date: 2026-03-01
+source: AGENTS.md sis critical constraints, brand-identity/SKILL.md
 
 ## problem
 

@@ -1,7 +1,7 @@
 # adr-005: session start gate
 
-**date:** 2026-03-01
-**source:** final_report_01.md section 4.2 pattern #1, phase_02_run_04.md
+date: 2026-03-01
+source: final_report_01.md section 4.2 pattern #1, phase_02_run_04.md
 
 ## problem
 

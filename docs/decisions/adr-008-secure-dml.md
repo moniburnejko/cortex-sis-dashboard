@@ -1,7 +1,7 @@
 # adr-008: secure-dml skill
 
-**date:** 2026-03-01
-**source:** session 2026-03-01
+date: 2026-03-01
+source: session 2026-03-01
 
 ## problem
 

@@ -1,7 +1,7 @@
 # adr-012: prompt text as enforcement mechanism for mandatory steps
 
-**date:** 2026-03-02
-**source:** phase_02_run_04.md, phase_03_run_01.md, secure_dml_test_260302.md
+date: 2026-03-02
+source: phase_02_run_04.md, phase_03_run_01.md, secure_dml_test_260302.md
 
 ## problem
 

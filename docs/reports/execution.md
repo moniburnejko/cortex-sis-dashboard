@@ -2,15 +2,13 @@
 
 ## environment
 
-| setting | value |
-|---|---|
-| database | CORTEX_DB |
-| schema | CORTEX_SCHEMA |
-| warehouse | CORTEX_WH |
-| role | CORTEX_ADMIN |
-| stage | STAGE_RAW_CSV |
-| app | RENEWAL_RADAR |
-| project dates | 2026-02-28 through 2026-03-02 |
+- database: CORTEX_DB
+- schema: CORTEX_SCHEMA
+- warehouse: CORTEX_WH
+- role: CORTEX_ADMIN
+- stage: STAGE_RAW_CSV
+- app: RENEWAL_RADAR
+- project dates: 2026-02-28 through 2026-03-02
 
 ---
 

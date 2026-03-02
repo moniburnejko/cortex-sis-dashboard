@@ -74,20 +74,20 @@ invoke with `$ skill-name`. do NOT replicate skill steps manually - manual execu
 
 ## session start gate
 
-before executing any ddl, data loading, or code generation in this session:
+**STOP.** before reading any file, running any sql, or responding to any task:
 
-- [ ] `$ check-local-environment` passed - snow cli connected, credentials valid
-- [ ] `$ check-snowflake-context` passed - role, warehouse, database, schema confirmed
+- [ ] invoke `$ check-local-environment` - snow cli connected, credentials valid
+- [ ] invoke `$ check-snowflake-context` - role, warehouse, database, schema confirmed
 
-**STOP.** do NOT read source files, run any sql, write any code, or proceed to any phase
-until both skills above have been invoked and passed.
-checking snowflake context manually via `snow sql`, `SNOWFLAKE_SQL_EXECUTE`, or a memory file
-is NOT equivalent to invoking the skills. the skills perform additional validation steps
-that manual checks bypass.
+both skills must pass before proceeding. the user's task - whatever it is - waits.
 
-> **hooks:** `.cortex/hooks.json` is configured with a sessionstart hook that automatically
-> injects the gate instruction. this is belt-and-suspenders with the prompt text instruction.
-> if the hooks file is missing or disabled, the prompt text instruction is the fallback.
+manual checks are NOT equivalent to invoking the skills:
+- `snow sql` or `SNOWFLAKE_SQL_EXECUTE` does not replace `$ check-snowflake-context`
+- reading a memory file does not replace `$ check-local-environment`
+- prior session context does not replace either skill
+
+> **hooks:** a sessionstart hook at `~/.snowflake/cortex/hooks.json` injects this gate
+> instruction automatically at session start. the prompt text above is belt-and-suspenders.
 
 ---
 

@@ -1,10 +1,10 @@
 # final report: renewal radar sis dashboard
 
-**date:** 2026-03-01
-**scope:** phase 1 (run 02), phase 2 (run 04), phase 3 (run 01), code review
-**environment:** CORTEX_DB.CORTEX_SCHEMA, role CORTEX_ADMIN, warehouse CORTEX_WH
-**model:** claude-sonnet-4-5
-**dashboard:** RENEWAL_RADAR
+date: 2026-03-01
+scope: phase 1 (run 02), phase 2 (run 04), phase 3 (run 01), code review
+environment: CORTEX_DB.CORTEX_SCHEMA, role CORTEX_ADMIN, warehouse CORTEX_WH
+model: claude-sonnet-4-5
+dashboard: RENEWAL_RADAR
 
 ---
 
@@ -35,16 +35,14 @@ complete - all 8/8 acceptance checks passed.
 phase 1 established the snowflake infrastructure and loaded source data. executed across 2 prompts
 in 2 separate sessions.
 
-| deliverable | result |
-|---|---|
-| logging objects (`APP_EVENTS`, `AUDIT_LOG`, `V_APP_EVENTS`, `LOG_AUDIT_EVENT`) | created, all functional |
-| domain table (`RENEWAL_FLAGS`) | created |
-| stage (`STAGE_RAW_CSV`) | created |
-| source tables (`FACT_RENEWAL`, `FACT_PREMIUM_EVENT`, `DIM_POLICY`) | created, loaded |
-| `FACT_RENEWAL` rows | 50,000 |
-| `FACT_PREMIUM_EVENT` rows | 94,642 |
-| `DIM_POLICY` rows | 36,298 |
-| audit log entry for data load | present (2 events) |
+- logging objects: `APP_EVENTS`, `AUDIT_LOG`, `V_APP_EVENTS`, `LOG_AUDIT_EVENT` - created, all functional
+- domain table: `RENEWAL_FLAGS` - created
+- stage: `STAGE_RAW_CSV` - created
+- source tables: `FACT_RENEWAL`, `FACT_PREMIUM_EVENT`, `DIM_POLICY` - created, loaded
+- `FACT_RENEWAL` rows: 50,000
+- `FACT_PREMIUM_EVENT` rows: 94,642
+- `DIM_POLICY` rows: 36,298
+- audit log entry for data load: present (2 events)
 
 skill compliance: all 4 mandatory skills invoked correctly in prompt 2. session start gate
 passed in both sessions. `$ prepare-data` executed all 8 steps.
@@ -62,16 +60,14 @@ deployed after 5 deploy cycles across 2 sessions.
 
 phase 2 built the 3-page dashboard from scratch, then refined it through bug fixes, display-label additions, and scope corrections.
 
-| deliverable | result |
-|---|---|
-| dashboard.py | 707 lines, 3 pages, deployed |
-| environment.yml | correct (streamlit 1.52.*, pandas, altair) |
-| snowflake.yml | correct format |
-| page 1: kpi overview | renewal rate, trends, outcomes by region |
-| page 2: premium pressure | heatmap, premium change charts, band analysis |
-| page 3: flag management | flag submission, review, audit log |
-| display-label layer | 6 mapping dictionaries, all charts/filters/tables use human-readable labels |
-| deploy cycles | 5 total (1 runtime error fix, 1 bug fix, 1 display-label, 1 scope fix, 1 db correction) |
+- dashboard.py: 707 lines, 3 pages, deployed
+- environment.yml: correct (streamlit 1.52.*, pandas, altair)
+- snowflake.yml: correct format
+- page 1 (kpi overview): renewal rate, trends, outcomes by region
+- page 2 (premium pressure): heatmap, premium change charts, band analysis
+- page 3 (flag management): flag submission, review, audit log
+- display-label layer: 6 mapping dictionaries, all charts/filters/tables use human-readable labels
+- deploy cycles: 5 total (1 runtime error fix, 1 bug fix, 1 display-label, 1 scope fix, 1 db correction)
 
 skill compliance: partial. `$ sis-streamlit` loaded in both sessions. sub-skills (build-dashboard, brand-identity, sis-patterns) read correctly. however:
 - session start gate not invoked in either session
@@ -89,13 +85,11 @@ all 5 sql checks pass numerically, but with important qualifications.
 
 phase 3 verified flag submission, flag review, and audit logging via 5 sql threshold checks.
 
-| check | expected | actual | status |
-|---|---|---|---|
-| FILTER_CHANGE events in `AUDIT_LOG` | >= 1 | 30 | PASS (misleading, see bugs section) |
-| open flags in `RENEWAL_FLAGS` | >= 1 | 5 | PASS |
-| FLAG_ADDED events in `AUDIT_LOG` | >= 1 | 6 | PASS |
-| reviewed flags with reviewed_by | >= 1 | 6 | PASS |
-| FLAG_REVIEWED events in `AUDIT_LOG` | >= 1 | 2 | PASS |
+- FILTER_CHANGE events in `AUDIT_LOG`: 30 (expected >= 1) - PASS (misleading, see bugs section)
+- open flags in `RENEWAL_FLAGS`: 5 (expected >= 1) - PASS
+- FLAG_ADDED events in `AUDIT_LOG`: 6 (expected >= 1) - PASS
+- reviewed flags with reviewed_by: 6 (expected >= 1) - PASS
+- FLAG_REVIEWED events in `AUDIT_LOG`: 2 (expected >= 1) - PASS
 
 skill compliance: `$ sis-dashboard` not invoked. all checks ran manually via SNOWFLAKE_SQL_EXECUTE. same bypass pattern as all prior runs.
 
